@@ -614,6 +614,7 @@ let editingMetaId = null;
 let editingUserId = null;
 let showCatAnual = false;
 let saveTimeout = null;
+let currentYear = new Date().getFullYear();
 
 // =====================================================================
 // SYNC INDICATOR
@@ -705,15 +706,15 @@ function doLogout(){
 // DATA LOAD / SAVE
 // =====================================================================
 async function loadData(){
-  const rows = await sb(`financial_data?user_login=eq.${CU.login}&select=*`);
+  const rows = await sb(`financial_data?user_login=eq.${CU.login}&select=data`);
   if(rows.length){
-    DATA = rows[0].data || {};
-    // Migrate flat structure to year-based
+    DATA = rows[0].data;
+    // Migrate old structure (months at root) to new year-based structure
     if(!DATA.years){
       const yr = DATA.currentYear || new Date().getFullYear();
       DATA.years = {};
-      DATA.years[yr] = { months: DATA.months || {}, casa: DATA.casa || {} };
-      delete DATA.months; delete DATA.casa;
+      DATA.years[yr] = { months: curMonths() || {}, casa: curCasa() || {} };
+      delete curMonths(); delete curCasa();
       DATA.currentYear = yr;
       if(DATA.currentMonth === undefined) DATA.currentMonth = new Date().getMonth();
       await saveData();
@@ -723,19 +724,18 @@ async function loadData(){
     DATA = buildInitialData();
     await saveData();
   }
-  const simR = await sb(`simulation_data?user_login=eq.${CU.login}&select=*`);
-  if(simR.length){ const sd = simR[0].data || {}; simRows = sd.rows || []; }
+  // Load sim
+  const simRows2 = await sb(`simulation_data?user_login=eq.${CU.login}&select=data`);
+  if(simRows2.length){ const sd = simRows2[0].data; simRows = sd.rows||[]; }
 }
 
 async function saveData(){
   setSyncing();
   try {
-    const existing = await sb(`financial_data?user_login=eq.${CU.login}&select=id`);
-    if(existing.length){
-      await sb(`financial_data?user_login=eq.${CU.login}`,{method:'PATCH',body:JSON.stringify({data:DATA,updated_at:new Date().toISOString()})});
-    } else {
-      await sb(`financial_data`,{method:'POST',body:JSON.stringify({user_login:CU.login,data:DATA,updated_at:new Date().toISOString()})});
-    }
+    await sb(`financial_data?user_login=eq.${CU.login}`, {
+      method:'POST', headers:{'Prefer':'resolution=merge-duplicates'},
+      body: JSON.stringify({user_login: CU.login, data: DATA, updated_at: new Date().toISOString()})
+    });
     setSynced();
   } catch(e){ setSyncErr(); console.error(e); }
 }
@@ -743,29 +743,18 @@ async function saveData(){
 async function saveSim(){
   setSyncing();
   try {
-    const payload={rows:simRows,notes:document.getElementById('simNotes')?.value||'',sal:document.getElementById('simSal')?.value,extra:document.getElementById('simExtra')?.value,ant:document.getElementById('simAnt')?.value,inv:document.getElementById('simInv')?.value};
-    const existingSim = await sb(`simulation_data?user_login=eq.${CU.login}&select=id`);
-    if(existingSim.length){
-      await sb(`simulation_data?user_login=eq.${CU.login}`,{method:'PATCH',body:JSON.stringify({data:payload,updated_at:new Date().toISOString()})});
-    } else {
-      await sb(`simulation_data`,{method:'POST',body:JSON.stringify({user_login:CU.login,data:payload,updated_at:new Date().toISOString()})});
-    }
+    await sb(`simulation_data?user_login=eq.${CU.login}`, {
+      method:'POST', headers:{'Prefer':'resolution=merge-duplicates'},
+      body: JSON.stringify({user_login: CU.login, data: {rows: simRows, notes: document.getElementById('simNotes')?.value||'', sal: document.getElementById('simSal')?.value, extra: document.getElementById('simExtra')?.value, ant: document.getElementById('simAnt')?.value, inv: document.getElementById('simInv')?.value}, updated_at: new Date().toISOString()})
+    });
     setSynced();
-  } catch(e){ setSyncErr(); console.error(e); }
+  } catch(e){ setSyncErr(); }
 }
 
 function scheduleSave(){ clearTimeout(saveTimeout); saveTimeout = setTimeout(saveData, 1200); }
 
-// Year-aware data helpers
-function getYearData(yr){
-  if(!DATA.years) DATA.years={};
-  if(!DATA.years[yr]){
-    const months={}, casa={};
-    ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'].forEach(k=>{months[k]=emptyMonth();casa[k]=[];});
-    DATA.years[yr]={months,casa};
-  }
-  return DATA.years[yr];
-}
+// Year-aware helpers
+function getYearData(yr){ if(!DATA.years) DATA.years={}; if(!DATA.years[yr]) DATA.years[yr]={months:{jan:emptyMonth(),fev:emptyMonth(),mar:emptyMonth(),abr:emptyMonth(),mai:emptyMonth(),jun:emptyMonth(),jul:emptyMonth(),ago:emptyMonth(),set:emptyMonth(),out:emptyMonth(),nov:emptyMonth(),dez:emptyMonth()},casa:{jan:[],fev:[],mar:[],abr:[],mai:[],jun:[],jul:[],ago:[],set:[],out:[],nov:[],dez:[]}}; return DATA.years[yr]; }
 function curYD(){ return getYearData(currentYear); }
 function curMonths(){ return curYD().months; }
 function curCasa(){ return curYD().casa; }
@@ -776,29 +765,76 @@ function getAvailableYears(){ return Object.keys(DATA.years||{}).map(Number).sor
 // =====================================================================
 function emptyMonth(){ return {resumo:{saldoAnterior:0}, transactions:[]}; }
 function buildInitialData(){
-  // Clean empty slate — no demo data
-  const yr = new Date().getFullYear();
-  const months={};
-  const casa={};
-  ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'].forEach(k=>{months[k]=emptyMonth();casa[k]=[];});
+  // Always returns a clean empty slate — no demo data
+  const years = {};
+  years[currentYear] = {
+    months: {jan:emptyMonth(),fev:emptyMonth(),mar:emptyMonth(),abr:emptyMonth(),mai:emptyMonth(),jun:emptyMonth(),jul:emptyMonth(),ago:emptyMonth(),set:emptyMonth(),out:emptyMonth(),nov:emptyMonth(),dez:emptyMonth()},
+    casa:{jan:[],fev:[],mar:[],abr:[],mai:[],jun:[],jul:[],ago:[],set:[],out:[],nov:[],dez:[]}
+  };
   return {
     currentMonth: new Date().getMonth(),
-    currentYear: yr,
-    years: { [yr]: { months, casa } },
+    currentYear,
+    years,
     metas: [],
     investSaldo: 0,
   };
 }
+function defaultTx(mk){
+  const d={
+    jan:[{id:uuid(),tipo:'ENTRADA',desc:'Salário',valor:2300,categoria:'Entrada',tipoMov:'Fixo',banco:'pago',data:'2026-01-01'},{id:uuid(),tipo:'ENTRADA',desc:'Freelas Dezembro',valor:2010,categoria:'Entrada',tipoMov:'Variável',banco:'pago',data:'2026-01-01'},{id:uuid(),tipo:'SAÍDA',desc:'Moto 4/12',valor:515.86,categoria:'Moto',tipoMov:'Parcelado',banco:'nubank',data:'2026-01-01'},{id:uuid(),tipo:'SAÍDA',desc:'Casa',valor:630.66,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-01-01'},{id:uuid(),tipo:'SAÍDA',desc:'MEI',valor:80.90,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-01-01'},{id:uuid(),tipo:'SAÍDA',desc:'Plano Celular e NU+',valor:39,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'nubank',data:'2026-01-01'},{id:uuid(),tipo:'SAÍDA',desc:'Youtube',valor:16.90,categoria:'Assinaturas',tipoMov:'Fixo',banco:'nubank',data:'2026-01-01'},{id:uuid(),tipo:'SAÍDA',desc:'Capacete 4/9',valor:62.96,categoria:'Moto',tipoMov:'Parcelado',banco:'nubank',data:'2026-01-01'},{id:uuid(),tipo:'SAÍDA',desc:'Mercado',valor:46.93,categoria:'Alimentação',tipoMov:'Variável',banco:'pago',data:'2026-01-03'},{id:uuid(),tipo:'SAÍDA',desc:'Pizza Dois Córregos',valor:110,categoria:'Comida / Besteira',tipoMov:'Variável',banco:'pago',data:'2026-01-03'}],
+    fev:[{id:uuid(),tipo:'ENTRADA',desc:'Salário',valor:2800,categoria:'Entrada',tipoMov:'Fixo',banco:'pago',data:'2026-02-01'},{id:uuid(),tipo:'ENTRADA',desc:'Colação + Baile',valor:990,categoria:'Entrada',tipoMov:'Variável',banco:'pago',data:'2026-02-01'},{id:uuid(),tipo:'INVESTIMENTOS',desc:'Investimentos 15%',valor:0,categoria:'Investimentos',tipoMov:'Fixo',banco:'pago',data:'2026-02-01'},{id:uuid(),tipo:'SAÍDA',desc:'Moto 5/12',valor:515.86,categoria:'Moto',tipoMov:'Parcelado',banco:'nubank',data:'2026-02-01'},{id:uuid(),tipo:'SAÍDA',desc:'Casa',valor:588.56,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-02-01'},{id:uuid(),tipo:'SAÍDA',desc:'Show Harry Styles 1/5',valor:99.76,categoria:'Lazer / Saídas',tipoMov:'Parcelado',banco:'nubank',data:'2026-02-01'},{id:uuid(),tipo:'SAÍDA',desc:'Veterinário Belo 3/6',valor:55,categoria:'Saúde',tipoMov:'Parcelado',banco:'nubank',data:'2026-02-01'}],
+    mar:[{id:uuid(),tipo:'ENTRADA',desc:'Salário',valor:2800,categoria:'Entrada',tipoMov:'Fixo',banco:'pago',data:'2026-03-01'},{id:uuid(),tipo:'INVESTIMENTOS',desc:'Investimentos 25%',valor:0,categoria:'Investimentos',tipoMov:'Fixo',banco:'pago',data:'2026-03-01'},{id:uuid(),tipo:'SAÍDA',desc:'Moto 6/12',valor:515.86,categoria:'Moto',tipoMov:'Parcelado',banco:'nubank',data:'2026-03-01'},{id:uuid(),tipo:'SAÍDA',desc:'Casa',valor:703.88,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-03-01'},{id:uuid(),tipo:'SAÍDA',desc:'MEI',valor:86.15,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-03-01'},{id:uuid(),tipo:'SAÍDA',desc:'Academia',valor:75,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-03-01'},{id:uuid(),tipo:'SAÍDA',desc:'Show Harry Styles 2/5',valor:99.76,categoria:'Lazer / Saídas',tipoMov:'Parcelado',banco:'nubank',data:'2026-03-01'},{id:uuid(),tipo:'SAÍDA',desc:'Ingresso Caju 1/2',valor:45,categoria:'Lazer / Saídas',tipoMov:'Parcelado',banco:'nubank',data:'2026-03-01'},{id:uuid(),tipo:'SAÍDA',desc:'Pedágio',valor:7,categoria:'Gasolina / Transporte',tipoMov:'Variável',banco:'pago',data:'2026-03-07'},{id:uuid(),tipo:'SAÍDA',desc:'Pizza Exagerada',valor:63.99,categoria:'Comida / Besteira',tipoMov:'Variável',banco:'pago',data:'2026-03-15'}],
+    abr:[{id:uuid(),tipo:'ENTRADA',desc:'Salário',valor:2800,categoria:'Entrada',tipoMov:'Fixo',banco:'pago',data:'2026-04-01'},{id:uuid(),tipo:'INVESTIMENTOS',desc:'Investimentos 20%',valor:0,categoria:'Investimentos',tipoMov:'Fixo',banco:'pago',data:'2026-04-01'},{id:uuid(),tipo:'SAÍDA',desc:'Moto 7/12',valor:515.80,categoria:'Moto',tipoMov:'Fixo',banco:'nubank',data:'2026-04-01'},{id:uuid(),tipo:'SAÍDA',desc:'Casa',valor:750,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-04-01'},{id:uuid(),tipo:'SAÍDA',desc:'3 Anos Namoro',valor:300,categoria:'Lazer / Saídas',tipoMov:'Variável',banco:'pago',data:'2026-04-01'}],
+    mai:[{id:uuid(),tipo:'ENTRADA',desc:'Salário',valor:2800,categoria:'Entrada',tipoMov:'Fixo',banco:'pago',data:'2026-05-01'},{id:uuid(),tipo:'INVESTIMENTOS',desc:'Investimentos 20%',valor:560,categoria:'Investimentos',tipoMov:'Fixo',banco:'pago',data:'2026-05-01'},{id:uuid(),tipo:'SAÍDA',desc:'Moto 8/12',valor:515.80,categoria:'Moto',tipoMov:'Fixo',banco:'nubank',data:'2026-05-01'},{id:uuid(),tipo:'SAÍDA',desc:'Casa',valor:750,categoria:'Casa / Necessários',tipoMov:'Fixo',banco:'pago',data:'2026-05-01'}],
+    jun:[{id:uuid(),tipo:'ENTRADA',desc:'Salário',valor:2800,categoria:'Entrada',tipoMov:'Fixo',banco:'pago',data:'2026-06-01'},{id:uuid(),tipo:'INVESTIMENTOS',desc:'Investimentos 20%',valor:560,categoria:'Investimentos',tipoMov:'Fixo',banco:'pago',data:'2026-06-01'},{id:uuid(),tipo:'SAÍDA',desc:'Moto 9/12',valor:515.80,categoria:'Moto',tipoMov:'Fixo',banco:'nubank',data:'2026-06-01'}],
+    jul:[{id:uuid(),tipo:'ENTRADA',desc:'Salário',valor:2800,categoria:'Entrada',tipoMov:'Fixo',banco:'pago',data:'2026-07-01'},{id:uuid(),tipo:'INVESTIMENTOS',desc:'Investimentos 20%',valor:560,categoria:'Investimentos',tipoMov:'Fixo',banco:'pago',data:'2026-07-01'},{id:uuid(),tipo:'SAÍDA',desc:'Moto 10/12',valor:515.80,categoria:'Moto',tipoMov:'Fixo',banco:'nubank',data:'2026-07-01'}],
+  };
+  return d[mk]||[];
+}
+function casaDef(mk){
+  const d={
+    jan:[{id:uuid(),desc:'Água',valor:67.34,divisao:3},{id:uuid(),desc:'Luto',valor:62.5,divisao:3},{id:uuid(),desc:'Energia',valor:249.19,divisao:3},{id:uuid(),desc:'IPTU',valor:62.28,divisao:3},{id:uuid(),desc:'Ração',valor:100,divisao:3},{id:uuid(),desc:'Mercado (1)',valor:237,divisao:3},{id:uuid(),desc:'Mercado (2)',valor:684.67,divisao:3},{id:uuid(),desc:'Internet',valor:119.99,divisao:2},{id:uuid(),desc:'Belo 2/6',valor:55,divisao:1}],
+    fev:[{id:uuid(),desc:'Água',valor:66.09,divisao:3},{id:uuid(),desc:'Luto',valor:62.5,divisao:3},{id:uuid(),desc:'Energia',valor:210.44,divisao:3},{id:uuid(),desc:'IPTU',valor:89.65,divisao:3},{id:uuid(),desc:'Ração',valor:157,divisao:3},{id:uuid(),desc:'Mercado (1)',valor:151,divisao:3},{id:uuid(),desc:'Mercado (2)',valor:375,divisao:3},{id:uuid(),desc:'Mercado (3)',valor:474,divisao:3},{id:uuid(),desc:'Internet',valor:119.99,divisao:2},{id:uuid(),desc:'Belo 3/6',valor:55,divisao:1}],
+    mar:[{id:uuid(),desc:'Água',valor:68.31,divisao:3},{id:uuid(),desc:'Luto',valor:62.5,divisao:3},{id:uuid(),desc:'Energia',valor:217.76,divisao:3},{id:uuid(),desc:'IPTU',valor:89.65,divisao:3},{id:uuid(),desc:'Gás',valor:110,divisao:3},{id:uuid(),desc:'Mercado (1)',valor:599.36,divisao:3},{id:uuid(),desc:'Mercado (2)',valor:237.71,divisao:3},{id:uuid(),desc:'Máquina de Lavar',valor:250.7,divisao:3},{id:uuid(),desc:'Internet',valor:119.99,divisao:2},{id:uuid(),desc:'Belo 4/6',valor:55,divisao:1}],
+  };
+  return d[mk]||[];
+}
 
+// =====================================================================
+// NAVIGATION & MONTH
+// =====================================================================
+function navTo(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el=>{if(el.getAttribute('onclick')===`navTo('${p}')`)el.classList.add('active');});
+  curPage=p;closeSidebar();
+  renderPage(p);
+}
+function renderPage(p){
+  if(p==='dashboard') renderDash();
+  else if(p==='lancamentos') renderLanc();
+  else if(p==='investimentos') renderInvest();
+  else if(p==='metas') renderMetas();
+  else if(p==='casa') renderCasa();
+  else if(p==='simulacao') loadSimUI();
+  else if(p==='anual') renderAnual();
+  else if(p==='admin') renderAdmin();
+}
 function renderMonthBtns(){
   const a=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const yrs=getAvailableYears();
-  const yrRow=yrs.length>0?`<div style="display:flex;gap:3px;margin-bottom:6px;flex-wrap:wrap">${yrs.map(y=>`<button class="mbtn${currentYear===y?' active':''}" style="flex:1" onclick="setYear(${y})">${y}</button>`).join('')}<button class="mbtn" style="padding:5px 6px" onclick="addYear()" title="Novo ano">+</button></div>`:'';
-  document.getElementById('monthBtns').innerHTML=yrRow+a.map((m,i)=>`<button class="mbtn${DATA.currentMonth===i?' active':''}" onclick="setMonth(${i})">${m}</button>`).join('');
+  const yrHtml=`<div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">${yrs.map(y=>`<button class="mbtn${currentYear===y?' active':''}" style="flex:1;min-width:44px" onclick="setYear(${y})">${y}</button>`).join('')}<button class="mbtn" style="flex:1;min-width:44px" onclick="addYear()" title="Novo ano">+</button></div>`;
+  document.getElementById('monthBtns').innerHTML=yrHtml+a.map((m,i)=>`<button class="mbtn${DATA.currentMonth===i?' active':''}" onclick="setMonth(${i})">${m}</button>`).join('');
 }
 function setMonth(i){DATA.currentMonth=i;scheduleSave();renderMonthBtns();renderPage(curPage);}
-function setYear(y){currentYear=y;DATA.currentYear=y;getYearData(y);scheduleSave();renderMonthBtns();renderPage(curPage);}
-function addYear(){const y=parseInt(prompt('Adicionar qual ano?',new Date().getFullYear()+1));if(!y||isNaN(y))return;getYearData(y);setYear(y);}
+function setYear(y){currentYear=y;DATA.currentYear=y;scheduleSave();renderMonthBtns();renderPage(curPage);}
+function addYear(){
+  const y=parseInt(prompt('Qual ano deseja adicionar?',new Date().getFullYear()+1));
+  if(!y||isNaN(y))return;
+  getYearData(y); // creates if not exists
+  setYear(y);
+}
 function toggleTheme(){const l=document.body.classList.toggle('light');document.getElementById('themeIcon').textContent=l?'🌙':'☀️';localStorage.setItem('finDash_theme',l?'light':'dark');}
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('open');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open');}
@@ -836,7 +872,7 @@ function renderDash(){
   // Monthly chart
   const ms=[];
   for(let i=Math.max(0,DATA.currentMonth-4);i<=Math.min(11,DATA.currentMonth+1);i++){
-    const k=MK[i],tx=curYD().months[k].transactions;
+    const k=MK[i],tx=curMonths()[k].transactions;
     const me=tx.filter(t=>t.tipo==='ENTRADA').reduce((s,t)=>s+t.valor,0);
     const mg=tx.filter(t=>t.tipo==='SAÍDA').reduce((s,t)=>s+t.valor,0);
     const mi=tx.filter(t=>t.tipo==='INVESTIMENTOS').reduce((s,t)=>s+t.valor,0);
@@ -949,15 +985,17 @@ async function copiarMesAnterior(){
   const mesAtual=DATA.currentMonth;
   const mesAnt=mesAtual===0?11:mesAtual-1;
   const yrAnt=mesAtual===0?currentYear-1:currentYear;
-  const mkAtual=MK[mesAtual],mkAnt=MK[mesAnt];
-  const txsAnt=(getYearData(yrAnt).months[mkAnt]?.transactions)||[];
-  const copia=txsAnt.filter(t=>t.tipo==='SAÍDA'&&(t.tipoMov==='Fixo'||t.tipoMov==='Parcelado'));
-  if(!copia.length){alert('Nenhuma transação fixa ou parcelada no mês anterior.');return;}
-  if(!confirm(`Copiar ${copia.length} transações fixas/parceladas de ${MONTHS[mesAnt]} para ${MONTHS[mesAtual]}?`))return;
-  const dataBase=currentYear+'-'+String(mesAtual+1).padStart(2,'0')+'-01';
-  curMonths()[mkAtual].transactions=[...curMonths()[mkAtual].transactions,...copia.map(t=>({...t,id:uuid(),data:dataBase}))];
+  const mkAtual=MK[mesAtual], mkAnt=MK[mesAnt];
+  const ydAnt=getYearData(yrAnt);
+  const txsAnt=(ydAnt.months[mkAnt]?.transactions)||[];
+  const fixasParceladas=txsAnt.filter(t=>t.tipo==='SAÍDA'&&(t.tipoMov==='Fixo'||t.tipoMov==='Parcelado'));
+  if(!fixasParceladas.length){alert('Nenhuma transação fixa ou parcelada encontrada no mês anterior.');return;}
+  if(!confirm(`Copiar ${fixasParceladas.length} transações fixas/parceladas de ${MONTHS[mesAnt]} para ${MONTHS[mesAtual]}?\nAs transações variáveis NÃO serão copiadas.`))return;
+  const dataBase=currentYear+'-'+(String(mesAtual+1).padStart(2,'0'))+'-01';
+  const novas=fixasParceladas.map(t=>({...t,id:uuid(),data:dataBase}));
+  curMonths()[mkAtual].transactions=[...curMonths()[mkAtual].transactions,...novas];
   await saveData();renderLanc();
-  alert(`✅ ${copia.length} transações copiadas!`);
+  alert(`✅ ${novas.length} transações copiadas!`);
 }
 
 // =====================================================================
@@ -966,7 +1004,7 @@ async function copiarMesAnterior(){
 function renderInvest(){
   const saldo=DATA.investSaldo||0;
   const all=[];let run=0;
-  getAvailableYears().forEach(yr=>{const yd=getYearData(yr);MK.forEach((mk,i)=>{(yd.months[mk]?.transactions||[]).filter(t=>t.tipo==='INVESTIMENTOS'||t.tipo==='RESGATE').forEach(t=>{run+=t.tipo==='INVESTIMENTOS'?t.valor:-t.valor;all.push({...t,mes:MONTHS[i]+' '+yr,saldoApos:Math.max(0,run)});});});});
+  MK.forEach((mk,i)=>{curMonths()[mk].transactions.filter(t=>t.tipo==='INVESTIMENTOS'||t.tipo==='RESGATE').forEach(t=>{run+=t.tipo==='INVESTIMENTOS'?t.valor:-t.valor;all.push({...t,mes:MONTHS[i],saldoApos:Math.max(0,run)});});});
   const ti=all.filter(t=>t.tipo==='INVESTIMENTOS').reduce((s,t)=>s+t.valor,0);
   const tr=all.filter(t=>t.tipo==='RESGATE').reduce((s,t)=>s+t.valor,0);
   document.getElementById('investCards').innerHTML=[
@@ -985,33 +1023,78 @@ function renderInvest(){
 function openNewMeta(){editingMetaId=null;document.getElementById('moMetaTitle').textContent='Nova Meta';['mDesc','mObj','mAtual','mAporteVal'].forEach(id=>document.getElementById(id).value='');document.getElementById('mAporteData').value=new Date().toISOString().substr(0,10);openModal('moMeta');}
 function renderMetas(){
   const cols=['#7c6af7','#3ecf8e','#f5c842','#f47c3c','#FF6B9D','#93c5fd'];
-  document.getElementById('metasGrid').innerHTML=(DATA.metas||[]).map((m,i)=>{
-    const p=Math.min(100,(m.atual/(m.objetivo||1)*100)),col=cols[i%cols.length],done=m.concluida||p>=100;
-    return`<div class="card" style="${done?'border-color:var(--green)':''}"><div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:4px"><div class="card-label">${done?'✅ ':''}${m.descricao}</div><div style="display:flex;gap:3px;flex-shrink:0"><button class="btn btn-g btn-sm" onclick="openEditMeta('${m.id}')" title="Editar">✎</button><button class="btn btn-g btn-sm" onclick="toggleMetaConcluida('${m.id}')" title="${done?'Reabrir':'Concluir'}">${done?'↩':'✓'}</button><button class="btn btn-d btn-sm" onclick="delMeta('${m.id}')" title="Excluir">✕</button></div></div><div class="card-val" style="color:${col}">${brl(m.atual)}</div><div class="card-sub">Meta: ${brl(m.objetivo)}</div><div class="prog"><div class="prog-fill" style="width:${p.toFixed(1)}%;background:${done?'var(--green)':col}"></div></div><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:10px;color:var(--text3)">${p.toFixed(1)}%</span><span style="font-size:10px;color:var(--text3)">${done?'Concluída! 🎉':'Falta '+brl(m.objetivo-m.atual)}</span></div></div>`;
-  }).join('')||'<div class="empty" style="grid-column:1/-1">Nenhuma meta criada ainda.</div>';
-  const ap=(DATA.metas||[]).flatMap(m=>(m.aportes||[]).map((a,ai)=>({...a,mn:m.descricao,mid:m.id,ai}))).sort((a,b)=>new Date(b.data)-new Date(a.data));
+  document.getElementById('metasGrid').innerHTML=DATA.metas.map((m,i)=>{
+    const p=Math.min(100,(m.atual/(m.objetivo||1)*100)),c=cols[i%cols.length];
+    const concluida=m.concluida||p>=100;
+    return`<div class="card" style="${concluida?'border-color:var(--green);opacity:.85':''}">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:4px">
+        <div class="card-label" style="display:flex;align-items:center;gap:5px">${concluida?'✅ ':''}${m.descricao}</div>
+        <div style="display:flex;gap:3px;flex-shrink:0">
+          <button class="btn btn-g btn-sm" onclick="openEditMeta('${m.id}')" title="Editar">✎</button>
+          <button class="btn btn-g btn-sm" onclick="toggleMetaConcluida('${m.id}')" title="${concluida?'Reabrir':' Concluir'}">${concluida?'↩':'✓'}</button>
+          <button class="btn btn-d btn-sm" onclick="delMeta('${m.id}')" title="Excluir">✕</button>
+        </div>
+      </div>
+      <div class="card-val" style="color:${c}">${brl(m.atual)}</div>
+      <div class="card-sub">Meta: ${brl(m.objetivo)}</div>
+      <div class="prog"><div class="prog-fill" style="width:${p.toFixed(1)}%;background:${concluida?'var(--green)':c}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:10px;color:var(--text3)">${p.toFixed(1)}%</span>
+        <span style="font-size:10px;color:var(--text3)">${concluida?'Concluída! 🎉':'Falta '+brl(m.objetivo-m.atual)}</span>
+      </div>
+    </div>`;}).join('')||'<div class="empty" style="grid-column:1/-1">Nenhuma meta. Clique em "+ Nova meta" para começar.</div>';
+  // Aportes table with delete button
+  const ap=DATA.metas.flatMap(m=>m.aportes.map((a,ai)=>({...a,mn:m.descricao,mid:m.id,ai}))).sort((a,b)=>new Date(b.data)-new Date(a.data));
   document.getElementById('metaAportesTbody').innerHTML=ap.length?ap.map(a=>`<tr><td><span class="ttag tt-fixo">${a.mn}</span></td><td class="td-desc">${a.desc||'Aporte'}</td><td class="td-sm">${a.data||'—'}</td><td class="td-val g" style="text-align:right">+ ${brl(a.valor)}</td><td><button class="btn btn-d btn-sm" onclick="delAporte('${a.mid}',${a.ai})">✕</button></td></tr>`).join(''):`<tr><td colspan="5" class="empty">Nenhum aporte</td></tr>`;
   document.getElementById('metaAportesMobile').innerHTML=ap.length?ap.map(a=>`<div class="mobile-item"><div class="mobile-item-icon" style="background:rgba(62,207,142,.1)">🎯</div><div class="mobile-item-body"><div class="mobile-item-desc">${a.desc||'Aporte'}</div><div class="mobile-item-sub"><span>${a.mn}</span><span>${a.data||'—'}</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="mobile-item-val" style="color:var(--green)">+ ${brl(a.valor)}</span><button class="btn btn-d btn-sm" style="padding:2px 7px" onclick="delAporte('${a.mid}',${a.ai})">✕</button></div></div>`).join(''):`<div class="empty">Nenhum aporte</div>`;
 }
-async function toggleMetaConcluida(id){const m=(DATA.metas||[]).find(x=>x.id===id);if(m){m.concluida=!m.concluida;await saveData();renderMetas();}}
-async function delMeta(id){if(!confirm('Excluir esta meta?'))return;DATA.metas=DATA.metas.filter(x=>x.id!==id);await saveData();renderMetas();}
-async function delAporte(metaId,ai){if(!confirm('Remover este aporte?'))return;const m=(DATA.metas||[]).find(x=>x.id===metaId);if(!m)return;const val=(m.aportes[ai]||{}).valor||0;m.aportes.splice(ai,1);m.atual=Math.max(0,m.atual-val);await saveData();renderMetas();}
-function openEditMeta(id){const m=(DATA.metas||[]).find(x=>x.id===id);if(!m)return;editingMetaId=id;document.getElementById('moMetaTitle').textContent='Editar Meta';document.getElementById('mDesc').value=m.descricao;document.getElementById('mObj').value=m.objetivo;document.getElementById('mAtual').value=m.atual;document.getElementById('mAporteVal').value='';document.getElementById('mAporteData').value=new Date().toISOString().substr(0,10);openModal('moMeta');}
+async function toggleMetaConcluida(id){
+  const m=DATA.metas.find(x=>x.id===id);if(!m)return;
+  m.concluida=!m.concluida;
+  await saveData();renderMetas();
+}
+async function delMeta(id){
+  if(!confirm('Excluir esta meta? Esta ação não pode ser desfeita.'))return;
+  DATA.metas=DATA.metas.filter(x=>x.id!==id);
+  await saveData();renderMetas();
+}
+async function delAporte(metaId, aporteIdx){
+  if(!confirm('Remover este aporte?'))return;
+  const m=DATA.metas.find(x=>x.id===metaId);if(!m)return;
+  const val=m.aportes[aporteIdx]?.valor||0;
+  m.aportes.splice(aporteIdx,1);
+  m.atual=Math.max(0,m.atual-val);
+  await saveData();renderMetas();
+}
+function openEditMeta(id){
+  const m=DATA.metas.find(x=>x.id===id);if(!m)return;
+  editingMetaId=id;document.getElementById('moMetaTitle').textContent='Editar Meta';
+  document.getElementById('mDesc').value=m.descricao;
+  document.getElementById('mObj').value=m.objetivo;
+  document.getElementById('mAtual').value=m.atual;
+  document.getElementById('mAporteVal').value='';
+  document.getElementById('mAporteData').value=new Date().toISOString().substr(0,10);
+  openModal('moMeta');
+}
 async function salvarMeta(){
   const desc=document.getElementById('mDesc').value;
-  const objStr=document.getElementById('mObj').value;
-  const atualStr=document.getElementById('mAtual').value;
-  const obj=objStr===''?0:parseFloat(objStr);
+  const obj=parseFloat(document.getElementById('mObj').value);  // allow 0
+  const atualRaw=document.getElementById('mAtual').value;
   const av=parseFloat(document.getElementById('mAporteVal').value)||0;
   const ad=document.getElementById('mAporteData').value;
   if(editingMetaId){
-    const m=(DATA.metas||[]).find(x=>x.id===editingMetaId);
-    if(m){if(desc)m.descricao=desc;m.objetivo=isNaN(obj)?m.objetivo:obj;if(atualStr!=='')m.atual=parseFloat(atualStr)||0;if(av>0){m.aportes.push({data:ad,valor:av,desc:'Aporte'});m.atual+=av;}}
+    const m=DATA.metas.find(x=>x.id===editingMetaId);
+    if(m){
+      if(desc) m.descricao=desc;
+      if(!isNaN(obj)) m.objetivo=obj;  // allow setting to 0
+      if(atualRaw!=='') m.atual=parseFloat(atualRaw)||0; // allow setting to 0
+      if(av>0){m.aportes.push({data:ad,valor:av,desc:'Aporte'});m.atual+=av;}
+    }
   } else {
     if(!desc){alert('Informe a descrição.');return;}
     const n={id:uuid(),descricao:desc,objetivo:isNaN(obj)?0:obj,atual:0,aportes:[],concluida:false};
     if(av>0){n.aportes.push({data:ad,valor:av,desc:'Aporte inicial'});n.atual=av;}
-    if(!DATA.metas)DATA.metas=[];DATA.metas.push(n);
+    DATA.metas.push(n);
   }
   editingMetaId=null;closeModal('moMeta');await saveData();renderMetas();
 }
@@ -1032,7 +1115,7 @@ function renderCasa(){
   document.getElementById('casaSuaParte').textContent=brl(t3/3);
   document.getElementById('casaPorDois').textContent=brl(t2/2);
   document.getElementById('casaSoVoce').textContent=brl(t1);
-  const hist=MK.filter(k=>(DATA.casa[k]||[]).length>0).map(k=>{const its=DATA.casa[k]||[];const tot=its.reduce((s,it)=>s+it.valor/it.divisao,0);return`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text2)">${MONTHS[MK.indexOf(k)]}</span><span style="font-family:'DM Mono',monospace;font-size:12.5px;color:var(--green)">${brl(tot)}</span></div>`;}).join('');
+  const hist=MK.filter(k=>(curCasa()[k]||[]).length>0).map(k=>{const its=curCasa()[k]||[];const tot=its.reduce((s,it)=>s+it.valor/it.divisao,0);return`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text2)">${MONTHS[MK.indexOf(k)]}</span><span style="font-family:'DM Mono',monospace;font-size:12.5px;color:var(--green)">${brl(tot)}</span></div>`;}).join('');
   document.getElementById('casaHist').innerHTML=hist||`<span style="font-size:12px;color:var(--text3)">Nenhum histórico</span>`;
 }
 function setCasaMes(k){casaMes=k;renderCasa();}
@@ -1070,14 +1153,24 @@ function limparSim(){if(!confirm('Limpar simulação?'))return;simRows=[];render
 // =====================================================================
 function toggleCatAnual(){showCatAnual=!showCatAnual;document.getElementById('anualCatPanel').style.display=showCatAnual?'block':'none';document.getElementById('btnCat').textContent=showCatAnual?'📊 Ocultar':'📊 Ver por categoria';if(showCatAnual)renderAnualCat();}
 function renderAnual(){
-  // Multi-year chart
+  // Multi-year evolution chart
   const yrs=getAvailableYears();
+  const yrSummary=yrs.map(yr=>{
+    const yd=getYearData(yr);
+    const e=MK.reduce((s,k)=>{const t=yd.months[k]?.transactions||[];return s+t.filter(x=>x.tipo==='ENTRADA').reduce((a,x)=>a+x.valor,0);},0);
+    const g=MK.reduce((s,k)=>{const t=yd.months[k]?.transactions||[];return s+t.filter(x=>x.tipo==='SAÍDA').reduce((a,x)=>a+x.valor,0);},0);
+    const iv=MK.reduce((s,k)=>{const t=yd.months[k]?.transactions||[];return s+t.filter(x=>x.tipo==='INVESTIMENTOS').reduce((a,x)=>a+x.valor,0);},0);
+    return{yr,e,g,iv};
+  });
+  let yrChartHtml='';
   if(yrs.length>1){
-    const mv_yr=yrs.map(yr=>{const yd=getYearData(yr);const e=MK.reduce((s,k)=>(yd.months[k]?.transactions||[]).filter(t=>t.tipo==='ENTRADA').reduce((a,t)=>a+t.valor,s),0);const g=MK.reduce((s,k)=>(yd.months[k]?.transactions||[]).filter(t=>t.tipo==='SAÍDA').reduce((a,t)=>a+t.valor,s),0);const iv=MK.reduce((s,k)=>(yd.months[k]?.transactions||[]).filter(t=>t.tipo==='INVESTIMENTOS').reduce((a,t)=>a+t.valor,s),0);return{yr,e,g,iv};});
-    const mv=Math.max(...mv_yr.map(y=>Math.max(y.e,y.g)),1);
+    const mv=Math.max(...yrSummary.map(y=>Math.max(y.e,y.g)),1);
+    yrChartHtml=`<div class="card" style="margin-bottom:16px"><div class="sec-title">Evolução por Ano</div><div style="display:flex;align-items:flex-end;gap:12px;height:120px;margin-bottom:8px">${yrSummary.map(y=>{const hE=Math.max(3,Math.round(y.e/mv*110)),hG=Math.max(3,Math.round(y.g/mv*110)),hI=Math.max(2,Math.round(y.iv/mv*110));return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%"><div style="flex:1;display:flex;align-items:flex-end;gap:2px;width:100%"><div style="flex:1;background:rgba(62,207,142,.7);border-radius:3px 3px 0 0;height:${hE}px" title="Entradas ${y.yr}: ${brl(y.e)}"></div><div style="flex:1;background:rgba(244,100,95,.7);border-radius:3px 3px 0 0;height:${hG}px" title="Gastos ${y.yr}: ${brl(y.g)}"></div><div style="flex:1;background:rgba(124,106,247,.7);border-radius:3px 3px 0 0;height:${hI}px" title="Invest ${y.yr}: ${brl(y.iv)}"></div></div><div style="font-size:10px;color:${y.yr===currentYear?'var(--accent2)':'var(--text3)'};margin-top:4px;font-family:'DM Mono',monospace;font-weight:${y.yr===currentYear?600:400}">${y.yr}</div></div>`;}).join('')}</div><div style="display:flex;gap:12px;flex-wrap:wrap">${yrSummary.map(y=>`<div style="font-size:11px;color:var(--text2)"><span style="font-family:'DM Mono',monospace;font-weight:600">${y.yr}:</span> <span style="color:var(--green)">${brl(y.e)}</span> entrada · <span style="color:var(--red)">${brl(y.g)}</span> gasto</div>`).join('')}</div></div>`;
+    document.getElementById('anualYrChart').innerHTML=yrChartHtml;
     document.getElementById('anualYrChart').style.display='block';
-    document.getElementById('anualYrChart').innerHTML='<div class="card"><div class="sec-title" style="margin-bottom:12px">Evolução por Ano</div><div style="display:flex;align-items:flex-end;gap:10px;height:100px;margin-bottom:8px">'+mv_yr.map(y=>{const hE=Math.max(3,Math.round(y.e/mv*90)),hG=Math.max(3,Math.round(y.g/mv*90)),hI=Math.max(2,Math.round(y.iv/mv*90));return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%"><div style="flex:1;display:flex;align-items:flex-end;gap:2px;width:100%"><div style="flex:1;background:rgba(62,207,142,.7);border-radius:2px 2px 0 0;height:'+hE+'px"></div><div style="flex:1;background:rgba(244,100,95,.7);border-radius:2px 2px 0 0;height:'+hG+'px"></div><div style="flex:1;background:rgba(124,106,247,.7);border-radius:2px 2px 0 0;height:'+hI+'px"></div></div><div style="font-size:10px;color:'+(y.yr===currentYear?'var(--accent2)':'var(--text3)')+';margin-top:3px;font-family:DM Mono,monospace;font-weight:'+(y.yr===currentYear?600:400)+'">'+y.yr+'</div></div>';}).join('')+'</div><div style="font-size:11px;color:var(--text3)">Verde=Entradas · Vermelho=Gastos · Roxo=Investimentos</div></div>';
-  } else { document.getElementById('anualYrChart').style.display='none'; }
+  } else {
+    document.getElementById('anualYrChart').style.display='none';
+  }
   let ac=0;
   const rows=MK.map((k,i)=>{const txs=(curYD().months[k]?.transactions)||[];const e=txs.filter(t=>t.tipo==='ENTRADA').reduce((s,t)=>s+t.valor,0);const g=txs.filter(t=>t.tipo==='SAÍDA').reduce((s,t)=>s+t.valor,0);const iv=txs.filter(t=>t.tipo==='INVESTIMENTOS').reduce((s,t)=>s+t.valor,0);const re=txs.filter(t=>t.tipo==='RESGATE').reduce((s,t)=>s+t.valor,0);const s=e+re-g-iv;ac+=s;return{m:MONTHS[i],e,g,iv,s,ac,ok:txs.length>0};});
   const te=rows.reduce((s,r)=>s+r.e,0),tg=rows.reduce((s,r)=>s+r.g,0),ti=rows.reduce((s,r)=>s+r.iv,0);
@@ -1088,7 +1181,7 @@ function renderAnual(){
   if(showCatAnual)renderAnualCat();
 }
 function renderAnualCat(){
-  const cm={};MK.forEach(k=>{curYD().months[k].transactions.filter(t=>t.tipo==='SAÍDA').forEach(t=>{const c=t.categoria||'Outros';cm[c]=(cm[c]||0)+t.valor;});});
+  const cm={};MK.forEach(k=>{curMonths()[k].transactions.filter(t=>t.tipo==='SAÍDA').forEach(t=>{const c=t.categoria||'Outros';cm[c]=(cm[c]||0)+t.valor;});});
   const sorted=Object.entries(cm).sort((a,b)=>b[1]-a[1]);const total=sorted.reduce((s,[,v])=>s+v,0),mx=sorted[0]?.[1]||1;
   document.getElementById('anualCatChart').innerHTML=sorted.map(([cat,val],i)=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:12.5px;color:var(--text2)">${cat}</span><span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3)">${brl(val)} <span style="color:${CCOLORS[i%CCOLORS.length]};font-weight:600">${total>0?(val/total*100).toFixed(1):0}%</span></span></div><div class="prog" style="height:8px"><div class="prog-fill" style="width:${(val/mx*100).toFixed(1)}%;background:${CCOLORS[i%CCOLORS.length]}"></div></div></div>`).join('')||'<span style="color:var(--text3)">Sem dados</span>';
 }
