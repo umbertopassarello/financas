@@ -215,7 +215,7 @@ select.inp{cursor:pointer}
 <!-- Login -->
 <div id="loginWrap">
   <div class="lcard">
-    <div class="llogo">V8 Finanças <em>Pessoais</em></div>
+    <div class="llogo">V9 - Finanças <em>Pessoais</em></div>
     <div class="lsub">Acesse seu painel financeiro</div>
     <div class="lerr" id="lerr"></div>
     <div class="fgr" style="margin-bottom:10px">
@@ -584,7 +584,26 @@ function navTo(page) {
   renderPage(page);
 }
 
+function propagarSaldos() {
+  const yrs = allYears().sort((a,b) => a-b);
+  let saldoCarry = 0;
+  yrs.forEach(yr => {
+    const yd_ = getYD(yr);
+    MK.forEach((mk) => {
+      if (!yd_.months[mk]) yd_.months[mk] = emptyMonth();
+      yd_.months[mk].resumo.saldoAnterior = saldoCarry;
+      const txs = yd_.months[mk].transactions || [];
+      const e  = txs.filter(t=>t.tipo==='ENTRADA').reduce((s,t)=>s+t.valor,0);
+      const g  = txs.filter(t=>t.tipo==='SAÍDA').reduce((s,t)=>s+t.valor,0);
+      const iv = txs.filter(t=>t.tipo==='INVESTIMENTOS').reduce((s,t)=>s+t.valor,0);
+      const re = txs.filter(t=>t.tipo==='RESGATE').reduce((s,t)=>s+t.valor,0);
+      saldoCarry = saldoCarry + e + re - g - iv;
+    });
+  });
+}
+
 function renderPage(p) {
+  propagarSaldos();
   if      (p === 'dashboard')    renderDash();
   else if (p === 'lancamentos')  renderLanc();
   else if (p === 'investimentos') renderInvest();
@@ -608,6 +627,7 @@ window.addEventListener('load', async () => {
       CU = JSON.parse(sess);
       setSplash('Carregando dados...');
       await loadData();
+      propagarSaldos();
       startApp();
     } catch(e) {
       console.error(e);
@@ -667,6 +687,7 @@ async function doLogin() {
     localStorage.setItem('fin_sess', JSON.stringify(CU));
     setSplash('Carregando dados...');
     await loadData();
+    propagarSaldos();
     startApp();
   } catch(e) {
     console.error(e);
