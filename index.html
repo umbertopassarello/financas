@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0e0f14;--sur:#16181f;--sur2:#1e2029;--sur3:#252834;--bd:#2a2d3a;--bd2:#363a4d;--tx:#e8eaf0;--tx2:#9499b0;--tx3:#5c6180;--ac:#7c6af7;--ac2:#a99ef9;--gn:#3ecf8e;--rd:#f4645f;--rd2:#a03d3a;--yw:#f5c842;--or:#f47c3c;--pu:#c77dff;--sh:0 4px 24px rgba(0,0,0,.4);--sw:220px}
-body.light{--bg:#f0f2f7;--sur:#fff;--sur2:#f0f1f5;--sur3:#e4e6ef;--bd:#dde0ea;--bd2:#c4c8d8;--tx:#1a1d2e;--tx2:#4a5068;--tx3:#8890aa;--ac:#6c5cf7;--ac2:#5a4ae0;--gn:#1a9e6e;--rd:#d43f3f;--rd2:#a03030;--yw:#b8900a;--or:#c45e20;--sh:0 4px 24px rgba(0,0,0,.08)}
+:root{--bg:#0e0f14;--sur:#16181f;--sur2:#1e2029;--sur3:#252834;--bd:#2a2d3a;--bd2:#363a4d;--tx:#f0f2f8;--tx2:#b0b6cc;--tx3:#6e75a0;--ac:#7c6af7;--ac2:#a99ef9;--gn:#2ecc7a;--rd:#f03e3e;--rd2:#a03d3a;--yw:#f5c842;--or:#f47c3c;--pu:#c77dff;--sh:0 4px 24px rgba(0,0,0,.4);--sw:220px}
+body.light{--bg:#f0f2f7;--sur:#fff;--sur2:#f0f1f5;--sur3:#e4e6ef;--bd:#dde0ea;--bd2:#c4c8d8;--tx:#12152a;--tx2:#3a4060;--tx3:#7880a0;--ac:#6c5cf7;--ac2:#5a4ae0;--gn:#15a05a;--rd:#d42020;--rd2:#a03030;--yw:#b8900a;--or:#c45e20;--sh:0 4px 24px rgba(0,0,0,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;transition:background .2s,color .2s}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;transition:background .2s,color .2s;font-size:15px}
 /* Splash */
 #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:14px}
 .spin{width:34px;height:34px;border:3px solid var(--bd2);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite}
@@ -71,7 +71,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .c2{grid-template-columns:repeat(2,1fr)}
 .card{background:var(--sur);border:1px solid var(--bd);border-radius:13px;padding:15px 17px}
 .cl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px;font-family:'DM Mono',monospace}
-.cv{font-size:21px;font-family:'DM Mono',monospace;font-weight:500;margin-top:4px;letter-spacing:-1px}
+.cv{font-size:23px;font-family:'DM Mono',monospace;font-weight:700;margin-top:4px;letter-spacing:-1px}
 .cv.g{color:var(--gn)}.cv.r{color:var(--rd)}.cv.a{color:var(--ac2)}.cv.y{color:var(--yw)}.cv.p{color:var(--pu)}
 .csub{font-size:11px;color:var(--tx3);margin-top:3px}
 .icard{background:linear-gradient(135deg,rgba(124,106,247,.12),rgba(199,125,255,.06));border:1px solid rgba(124,106,247,.25);border-radius:13px;padding:15px 17px}
@@ -81,14 +81,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .tt{font-size:13px;font-weight:600}
 .sx{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;min-width:460px}
-thead th{text-align:left;font-size:9px;letter-spacing:1.2px;color:var(--tx3);text-transform:uppercase;font-family:'DM Mono',monospace;padding:8px 13px;border-bottom:1px solid var(--bd);font-weight:500;white-space:nowrap}
+thead th{text-align:left;font-size:10px;letter-spacing:1px;color:var(--tx2);text-transform:uppercase;font-family:'DM Mono',monospace;padding:9px 14px;border-bottom:1px solid var(--bd);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none}
 tbody tr{border-bottom:1px solid var(--bd);transition:background .1s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--sur2)}
-td{padding:9px 13px;font-size:12.5px;vertical-align:middle}
+td{padding:10px 14px;font-size:13.5px;vertical-align:middle}
 .tdd{color:var(--tx);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tdv{font-family:'DM Mono',monospace;font-size:12.5px;white-space:nowrap;font-weight:500}
-.tdv.g{color:var(--gn)}.tdv.r{color:var(--rd)}.tdv.a{color:var(--ac2)}.tdv.p{color:var(--pu)}
+.tdv{font-family:'DM Mono',monospace;font-size:13.5px;white-space:nowrap;font-weight:700}
+.tdv.g{color:#1fd97a}.tdv.r{color:#ff4f4f}.tdv.a{color:var(--ac2)}.tdv.p{color:var(--pu)}
 .tds{font-size:11.5px;color:var(--tx3)}
 /* Mobile list */
 .mlist{display:none;flex-direction:column}
@@ -114,10 +114,10 @@ td{padding:9px 13px;font-size:12.5px;vertical-align:middle}
 .tg-p{background:rgba(245,200,66,.12);color:var(--yw)}
 .tg-v{background:rgba(244,124,60,.12);color:var(--or)}
 .tb{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9.5px;font-family:'DM Mono',monospace}
-.tb-e{background:rgba(62,207,142,.12);color:var(--gn)}
-.tb-s{background:rgba(244,100,95,.12);color:var(--rd)}
-.tb-i{background:rgba(124,106,247,.12);color:var(--ac2)}
-.tb-r{background:rgba(199,125,255,.12);color:var(--pu)}
+.tb-e{background:rgba(46,204,122,.22);color:#1fd97a;font-weight:700;border:1px solid rgba(46,204,122,.35)}
+.tb-s{background:rgba(240,62,62,.2);color:#ff4f4f;font-weight:700;border:1px solid rgba(240,62,62,.35)}
+.tb-i{background:rgba(124,106,247,.22);color:#b8aeff;font-weight:700;border:1px solid rgba(124,106,247,.35)}
+.tb-r{background:rgba(199,125,255,.22);color:#d99fff;font-weight:700;border:1px solid rgba(199,125,255,.35)}
 /* Inputs / Buttons */
 .inp{background:var(--sur2);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 11px;outline:none;transition:border .15s;width:100%}
 .inp:focus{border-color:var(--ac)}
@@ -205,6 +205,15 @@ select.inp{cursor:pointer}
   .c2{grid-template-columns:1fr}
   .cv{font-size:18px}
 }
+
+.sort-arrow{font-size:9px;margin-left:3px;opacity:.5}
+.sort-active .sort-arrow{opacity:1;color:var(--ac2)}
+.mini-dash{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;padding:14px;background:var(--sur);border:1px solid var(--bd);border-radius:13px}
+.md-item{display:flex;flex-direction:column;gap:2px}
+.md-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace}
+.md-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:700}
+.md-val.g{color:#1fd97a}.md-val.r{color:#ff4f4f}.md-val.a{color:var(--ac2)}
+@media(max-width:768px){.mini-dash{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -215,7 +224,7 @@ select.inp{cursor:pointer}
 <!-- Login -->
 <div id="loginWrap">
   <div class="lcard">
-    <div class="llogo">V9 - Finanças <em>Pessoais</em></div>
+    <div class="llogo">V10 Finanças <em>Pessoais</em></div>
     <div class="lsub">Acesse seu painel financeiro</div>
     <div class="lerr" id="lerr"></div>
     <div class="fgr" style="margin-bottom:10px">
@@ -311,9 +320,18 @@ select.inp{cursor:pointer}
     <div><h1 class="pt">Lançamentos <em id="lancMes">—</em></h1><p class="ps">Movimentações do mês</p></div>
     <div class="pact">
       <button class="btn bw bsm" onclick="openQuitarFatura()">✓ Quitar fatura</button>
+      <button class="btn bg bsm" onclick="openModal('moGerenciar')">⚙️ Gerenciar</button>
       <button class="btn bg bsm" onclick="copiarMesAnterior()">↩ Copiar mês anterior</button>
       <button class="btn bp" onclick="openLancModal()">+ Novo lançamento</button>
     </div>
+  </div>
+  <div class="mini-dash" id="miniDash">
+    <div class="md-item"><div class="md-label">Saldo Anterior</div><div class="md-val" id="md-ant">—</div></div>
+    <div class="md-item"><div class="md-label">Total Recebido</div><div class="md-val g" id="md-ent">—</div></div>
+    <div class="md-item"><div class="md-label">Investimentos</div><div class="md-val a" id="md-inv">—</div></div>
+    <div class="md-item"><div class="md-label">Total Gasto</div><div class="md-val r" id="md-gas">—</div></div>
+    <div class="md-item"><div class="md-label">Resumo Mensal</div><div class="md-val" id="md-mes">—</div></div>
+    <div class="md-item"><div class="md-label">Saldo Atual</div><div class="md-val" id="md-sal">—</div></div>
   </div>
   <div class="frow">
     <input class="inp" style="min-width:150px;flex:1" type="text" placeholder="🔍 Buscar..." id="fSearch" oninput="renderLanc()">
@@ -325,7 +343,7 @@ select.inp{cursor:pointer}
     <button class="btn bg bsm" onclick="clearFilters()">✕</button>
   </div>
   <div class="tw">
-    <div class="tbl-d sx"><table><thead><tr><th><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="accent-color:var(--ac)"></th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Data</th><th>Categoria</th><th>Mov.</th><th>Fatura</th><th>Ações</th></tr></thead><tbody id="lancBody"></tbody></table></div>
+    <div class="tbl-d sx"><table><thead><tr><th><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="accent-color:var(--ac)"></th><th onclick="sortLanc('tipo')" id="sh-tipo">Tipo<span class="sort-arrow">↕</span></th><th onclick="sortLanc('desc')" id="sh-desc">Descrição<span class="sort-arrow">↕</span></th><th onclick="sortLanc('valor')" id="sh-valor">Valor<span class="sort-arrow">↕</span></th><th onclick="sortLanc('data')" id="sh-data">Data<span class="sort-arrow">↕</span></th><th onclick="sortLanc('categoria')" id="sh-categoria">Categoria<span class="sort-arrow">↕</span></th><th onclick="sortLanc('tipoMov')" id="sh-tipoMov">Mov.<span class="sort-arrow">↕</span></th><th>Fatura</th><th>Ações</th></tr></thead><tbody id="lancBody"></tbody></table></div>
     <div class="mlist" id="lancMob"></div>
   </div>
 </div>
@@ -656,6 +674,9 @@ function startApp() {
   if (t === 'light') { document.body.classList.add('light'); document.getElementById('themeIcon').textContent = '🌙'; }
   renderYrRow();
   renderMBtns();
+  loadCustomCSS();
+  refreshCatSelects();
+  refreshBankSelects();
   navTo('dashboard'); // navTo já está definida acima ✓
 }
 
@@ -879,7 +900,7 @@ function renderDash() {
 // 12. LANÇAMENTOS
 // ═══════════════════════════════════════════════════
 function txRow(t, acts = true) {
-  const b  = BANKS[t.banco||'pago'];
+  const b  = getBanks()[t.banco||'pago'] || getBanks().pago;
   const vc = {ENTRADA:'g',SAÍDA:'r',INVESTIMENTOS:'a',RESGATE:'p'}[t.tipo] || 'r';
   const sg = (t.tipo==='ENTRADA'||t.tipo==='RESGATE') ? '+' : t.tipo==='INVESTIMENTOS' ? '◈' : '-';
   const mc = {ENTRADA:'tb-e',SAÍDA:'tb-s',INVESTIMENTOS:'tb-i',RESGATE:'tb-r'}[t.tipo] || 'tb-s';
@@ -899,7 +920,7 @@ function txRow(t, acts = true) {
 }
 
 function txCard(t, acts = true) {
-  const b  = BANKS[t.banco||'pago'];
+  const b  = getBanks()[t.banco||'pago'] || getBanks().pago;
   const vc = {ENTRADA:'var(--gn)',SAÍDA:'var(--rd)',INVESTIMENTOS:'var(--ac2)',RESGATE:'var(--pu)'}[t.tipo] || 'var(--rd)';
   const sg = (t.tipo==='ENTRADA'||t.tipo==='RESGATE') ? '+' : t.tipo==='INVESTIMENTOS' ? '◈' : '-';
   const ico= {ENTRADA:'💰',SAÍDA:'💸',INVESTIMENTOS:'📈',RESGATE:'💎'}[t.tipo] || '💸';
@@ -951,6 +972,8 @@ function openLancModal() {
   document.getElementById('lMov').value   = '';
   document.getElementById('lBanco').value = 'pago';
   document.getElementById('lData').value  = new Date().toISOString().substr(0,10);
+  refreshCatSelects();
+  refreshBankSelects();
   onTipoChg();
   openModal('moLanc');
 }
@@ -1021,8 +1044,9 @@ async function delLanc(id) {
 function openQuitarFatura() {
   const mk = MK[D.currentMonth];
   const bs = [...new Set((curM()[mk]?.transactions||[]).filter(t=>t.tipo==='SAÍDA'&&t.banco&&t.banco!=='pago').map(t=>t.banco))];
+  const allBanks = getBanks();
   document.getElementById('qBancos').innerHTML = bs.map(b => {
-    const info = BANKS[b];
+    const info = allBanks[b] || {l:b,c:'b-pago'};
     return `<label class="cbi"><input type="checkbox" value="${b}"><span class="bt ${info.c}" style="margin-left:4px">${info.l}</span></label>`;
   }).join('') || '<span style="color:var(--tx3);font-size:13px">Nenhuma fatura em aberto.</span>';
   openModal('moQuitar');
@@ -1448,13 +1472,232 @@ async function delUser(id,login) {
   renderAdmin();
 }
 
+
+// ═══════════════════════════════════════════════════
+// 19a. ORDENAÇÃO DE LANÇAMENTOS
+// ═══════════════════════════════════════════════════
+let sortCol = 'data', sortDir = 1; // 1=asc, -1=desc
+
+function sortLanc(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = col === 'data' ? -1 : 1; }
+  // atualizar visuais dos headers
+  document.querySelectorAll('[id^="sh-"]').forEach(el => el.classList.remove('sort-active'));
+  const el = document.getElementById('sh-' + col);
+  if (el) {
+    el.classList.add('sort-active');
+    el.querySelector('.sort-arrow').textContent = sortDir === 1 ? '↑' : '↓';
+  }
+  renderLanc();
+}
+
+function sortTxs(txs) {
+  return [...txs].sort((a, b) => {
+    let va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+    if (sortCol === 'valor') { va = Number(a.valor)||0; vb = Number(b.valor)||0; }
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va < vb) return -sortDir;
+    if (va > vb) return  sortDir;
+    return 0;
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// 19b. MINI DASHBOARD EM LANÇAMENTOS
+// ═══════════════════════════════════════════════════
+function updateMiniDash() {
+  const mk  = MK[D.currentMonth];
+  const txs = curM()[mk]?.transactions || [];
+  const ant = curM()[mk]?.resumo?.saldoAnterior || 0;
+  const e   = txs.filter(t=>t.tipo==='ENTRADA').reduce((s,t)=>s+t.valor,0);
+  const g   = txs.filter(t=>t.tipo==='SAÍDA').reduce((s,t)=>s+t.valor,0);
+  const iv  = txs.filter(t=>t.tipo==='INVESTIMENTOS').reduce((s,t)=>s+t.valor,0);
+  const re  = txs.filter(t=>t.tipo==='RESGATE').reduce((s,t)=>s+t.valor,0);
+  const mes = e + re - g - iv;
+  const sal = ant + mes;
+  const se  = (id, v, pos) => {
+    const el = document.getElementById(id); if (!el) return;
+    el.textContent = brl(Math.abs(v));
+    if (pos) el.style.color = v >= 0 ? '#1fd97a' : '#ff4f4f';
+  };
+  se('md-ant', ant, true);
+  se('md-ent', e);
+  se('md-inv', iv);
+  se('md-gas', g);
+  se('md-mes', mes, true);
+  se('md-sal', sal, true);
+}
+
+// ═══════════════════════════════════════════════════
+// 19c. GERENCIAR CATEGORIAS E CARTÕES
+// ═══════════════════════════════════════════════════
+// Categorias e bancos ficam em D.customCats e D.customBanks
+function getCats() {
+  if (!D.customCats) D.customCats = [...CATS];
+  return D.customCats;
+}
+
+function getBanks() {
+  const defaults = { pago:{l:'Pago',c:'b-pago'}, nubank:{l:'Nubank',c:'b-nubank'}, nupj:{l:'Nubank PJ',c:'b-nupj'}, santander:{l:'Santander',c:'b-santander'}, santpj:{l:'Sant. PJ',c:'b-santpj'}, ml:{l:'Mercado Livre',c:'b-ml'}, inter:{l:'Inter',c:'b-inter'}, picpay:{l:'PicPay',c:'b-picpay'} };
+  const custom   = D.customBanks || {};
+  return { ...defaults, ...custom };
+}
+
+function switchGerTab(tab) {
+  document.querySelectorAll('#gerTabs .tab').forEach((t,i) => t.classList.toggle('on', (tab==='cats'&&i===0)||(tab==='banks'&&i===1)));
+  document.getElementById('gerCats').style.display  = tab==='cats'  ? 'block' : 'none';
+  document.getElementById('gerBanks').style.display = tab==='banks' ? 'block' : 'none';
+  if (tab==='cats')  renderCatList();
+  if (tab==='banks') renderBankList();
+}
+
+function renderCatList() {
+  const cats = getCats();
+  document.getElementById('catList').innerHTML = cats.map((cat,i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sur2);border-radius:8px;border:1px solid var(--bd)">
+      <span style="flex:1;font-size:13px">${cat}</span>
+      <input class="inp" value="${cat}" style="width:180px;padding:5px 8px;font-size:12px" onchange="renameCat(${i},this.value)">
+      ${!['Alimentação','Assinaturas','Casa / Necessários','Entrada','Outros','Saúde','Investimentos'].includes(cat)
+        ? `<button class="btn bd bsm" onclick="removeCat(${i})">✕</button>` : '<span style="width:46px"></span>'}
+    </div>`).join('');
+}
+
+function addCat() {
+  const v = document.getElementById('newCatInput').value.trim();
+  if (!v) return;
+  if (!D.customCats) D.customCats = [...CATS];
+  if (D.customCats.includes(v)) { alert('Categoria já existe.'); return; }
+  D.customCats.push(v);
+  document.getElementById('newCatInput').value = '';
+  renderCatList();
+  refreshCatSelects();
+}
+
+function removeCat(i) {
+  if (!confirm('Remover esta categoria?')) return;
+  D.customCats.splice(i, 1);
+  renderCatList();
+  refreshCatSelects();
+}
+
+function renameCat(i, newName) {
+  if (!newName.trim()) return;
+  if (!D.customCats) D.customCats = [...CATS];
+  D.customCats[i] = newName.trim();
+  renderCatList();
+  refreshCatSelects();
+}
+
+function refreshCatSelects() {
+  const cats = getCats();
+  const opts = `<option value="">—</option>` + cats.map(c=>`<option>${c}</option>`).join('');
+  ['lCat'].forEach(id => { const el=document.getElementById(id); if(el){const v=el.value;el.innerHTML=opts;el.value=v;} });
+  // filtro
+  const fCat = document.getElementById('fCat');
+  if (fCat) { fCat.innerHTML = `<option value="">Categorias</option>` + cats.map(c=>`<option>${c}</option>`).join(''); }
+}
+
+function renderBankList() {
+  const defaults = ['pago','nubank','nupj','santander','santpj','ml','inter','picpay'];
+  const custom   = D.customBanks || {};
+  const allBanks = getBanks();
+  document.getElementById('bankList').innerHTML = Object.entries(allBanks).map(([k,v]) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sur2);border-radius:8px;border:1px solid var(--bd)">
+      <span class="bt" style="background:${v.color?v.color+'22':'rgba(124,106,247,.15)'};color:${v.color||'var(--ac2)'};border-color:${v.color||'var(--ac2)'}66;flex-shrink:0">${v.l}</span>
+      <span style="flex:1;font-size:12px;color:var(--tx3);font-family:'DM Mono',monospace">${k}</span>
+      ${defaults.includes(k) ? '<span style="font-size:11px;color:var(--tx3)">padrão</span>' : `<button class="btn bd bsm" onclick="removeBank('${k}')">✕</button>`}
+    </div>`).join('');
+}
+
+function addBank() {
+  const id    = document.getElementById('newBankId').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const label = document.getElementById('newBankLabel').value.trim();
+  const color = document.getElementById('newBankColor').value;
+  if (!id||!label) { alert('Preencha ID e nome.'); return; }
+  if (!D.customBanks) D.customBanks = {};
+  D.customBanks[id] = { l: label, c: 'b-custom-'+id, color };
+  // adicionar CSS dinâmico
+  injectBankCSS(id, color);
+  document.getElementById('newBankId').value = '';
+  document.getElementById('newBankLabel').value = '';
+  renderBankList();
+  refreshBankSelects();
+}
+
+function removeBank(id) {
+  if (!confirm('Remover este cartão?')) return;
+  delete D.customBanks[id];
+  renderBankList();
+  refreshBankSelects();
+}
+
+function injectBankCSS(id, color) {
+  const styleId = 'dyn-bank-'+id;
+  let el = document.getElementById(styleId);
+  if (!el) { el = document.createElement('style'); el.id = styleId; document.head.appendChild(el); }
+  el.textContent = `.b-custom-${id}{background:${color}22;color:${color};border:1px solid ${color}66}`;
+}
+
+function refreshBankSelects() {
+  const banks = getBanks();
+  const opts  = Object.entries(banks).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('');
+  const lBanco = document.getElementById('lBanco');
+  if (lBanco) { const v=lBanco.value; lBanco.innerHTML=opts; lBanco.value=v||'pago'; }
+  const fBanco = document.getElementById('fBanco');
+  if (fBanco) { fBanco.innerHTML='<option value="">Faturas</option>'+opts; }
+}
+
+function loadCustomCSS() {
+  Object.entries(D.customBanks||{}).forEach(([id,b])=>{ if(b.color) injectBankCSS(id,b.color); });
+}
+
+// abrir modal gerenciar → renderizar aba ativa
+const _origOpenModal = openModal;
+
 // ═══════════════════════════════════════════════════
 // 19. MODAIS
 // ═══════════════════════════════════════════════════
-function openModal(id)  { document.getElementById(id).classList.add('on'); }
+function openModal(id)  {
+  document.getElementById(id).classList.add('on');
+  if (id === 'moGerenciar') { switchGerTab('cats'); }
+}
 function closeModal(id) { document.getElementById(id).classList.remove('on'); }
 document.querySelectorAll('.mo').forEach(el => el.addEventListener('click', e => { if(e.target===el) el.classList.remove('on'); }));
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.mo.on').forEach(el=>el.classList.remove('on')); });
 </script>
+
+<div class="mo" id="moGerenciar">
+  <div class="mbox" style="max-width:600px">
+    <div class="mh"><span class="mt">⚙️ Gerenciar Categorias e Cartões</span><button class="btn bg bsm" onclick="closeModal('moGerenciar')">✕</button></div>
+    <div class="mb">
+      <div class="tabs" id="gerTabs" style="margin-bottom:14px">
+        <button class="tab on" onclick="switchGerTab('cats')">Categorias</button>
+        <button class="tab" onclick="switchGerTab('banks')">Cartões / Bancos</button>
+      </div>
+      <!-- CATEGORIAS -->
+      <div id="gerCats">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input class="inp" id="newCatInput" placeholder="Nova categoria..." style="flex:1">
+          <button class="btn bp" onclick="addCat()">+ Adicionar</button>
+        </div>
+        <div id="catList" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto"></div>
+      </div>
+      <!-- CARTÕES -->
+      <div id="gerBanks" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <input class="inp" id="newBankId" placeholder="ID (ex: bradesco)" style="width:130px">
+          <input class="inp" id="newBankLabel" placeholder="Nome (ex: Bradesco)" style="flex:1">
+          <input class="inp" id="newBankColor" type="color" value="#888888" style="width:48px;padding:4px 6px;cursor:pointer">
+          <button class="btn bp" onclick="addBank()">+ Adicionar</button>
+        </div>
+        <p style="font-size:11px;color:var(--tx3);margin-bottom:10px">Os cartões padrão (Nubank, Santander, etc.) não podem ser removidos.</p>
+        <div id="bankList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn bp" onclick="closeModal('moGerenciar');saveData()">✓ Salvar e fechar</button></div>
+  </div>
+</div>
+
 </body>
 </html>
