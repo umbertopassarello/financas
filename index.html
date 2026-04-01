@@ -224,7 +224,7 @@ select.inp{cursor:pointer}
 <!-- Login -->
 <div id="loginWrap">
   <div class="lcard">
-    <div class="llogo">V10 Finanças <em>Pessoais</em></div>
+    <div class="llogo">V11 Finanças <em>Pessoais</em></div>
     <div class="lsub">Acesse seu painel financeiro</div>
     <div class="lerr" id="lerr"></div>
     <div class="fgr" style="margin-bottom:10px">
@@ -579,6 +579,7 @@ let curPage = 'dashboard';
 let casaMes = 'jan';
 let curYear = new Date().getFullYear();
 let editLancId = null, editMetaId = null, editUserId = null;
+let sortCol = 'data', sortDir = -1; // ordenação padrão: data mais recente
 let showCatAnual = false, saveTimer = null;
 
 // ═══════════════════════════════════════════════════
@@ -936,25 +937,38 @@ function txCard(t, acts = true) {
 }
 
 function renderLanc() {
-  const mk   = MK[D.currentMonth];
-  let   txs  = [...(curM()[mk]?.transactions || [])];
-  const s    = (document.getElementById('fSearch')?.value || '').toLowerCase();
-  const ft   = document.getElementById('fTipo')?.value  || '';
-  const fc   = document.getElementById('fCat')?.value   || '';
-  const fb   = document.getElementById('fBanco')?.value || '';
-  const fd   = document.getElementById('fDe')?.value    || '';
-  const fa   = document.getElementById('fAte')?.value   || '';
+  const mk  = MK[D.currentMonth];
+  let   txs = [...(curM()[mk]?.transactions || [])];
+  const s   = (document.getElementById('fSearch')?.value || '').toLowerCase();
+  const ft  = document.getElementById('fTipo')?.value  || '';
+  const fc  = document.getElementById('fCat')?.value   || '';
+  const fb  = document.getElementById('fBanco')?.value || '';
+  const fd  = document.getElementById('fDe')?.value    || '';
+  const fa  = document.getElementById('fAte')?.value   || '';
   if (s)  txs = txs.filter(t => t.desc.toLowerCase().includes(s));
   if (ft) txs = txs.filter(t => t.tipo === ft);
   if (fc) txs = txs.filter(t => t.categoria === fc);
   if (fb) txs = txs.filter(t => (t.banco||'pago') === fb);
   if (fd) txs = txs.filter(t => t.data && t.data >= fd);
   if (fa) txs = txs.filter(t => t.data && t.data <= fa);
-  const cats = [...new Set((curM()[mk]?.transactions||[]).map(t=>t.categoria).filter(Boolean))].sort();
+  // ordenação por coluna
+  txs = txs.slice().sort((a, b) => {
+    let va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+    if (sortCol === 'valor') { va = Number(a.valor)||0; vb = Number(b.valor)||0; }
+    else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+    if (va < vb) return -sortDir;
+    if (va > vb) return  sortDir;
+    return 0;
+  });
+  // popular filtro de categorias
+  const cats = getCats ? getCats() : [];
   const fce  = document.getElementById('fCat');
-  if (fce) { const cur = fce.value; fce.innerHTML = `<option value="">Categorias</option>` + cats.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join(''); }
+  if (fce) { const cur = fce.value; fce.innerHTML = `<option value="">Categorias</option>` + cats.map(cat=>`<option${cat===cur?' selected':''}>${cat}</option>`).join(''); }
+  // renderizar tabela
   document.getElementById('lancBody').innerHTML = txs.length ? txs.map(t=>txRow(t,true)).join('')  : `<tr><td colspan="9" class="empty">Nenhum lançamento</td></tr>`;
   document.getElementById('lancMob').innerHTML  = txs.length ? txs.map(t=>txCard(t,true)).join('') : `<div class="empty">Nenhum lançamento</div>`;
+  // mini dashboard
+  updateMiniDash();
 }
 
 function clearFilters() {
@@ -1476,7 +1490,6 @@ async function delUser(id,login) {
 // ═══════════════════════════════════════════════════
 // 19a. ORDENAÇÃO DE LANÇAMENTOS
 // ═══════════════════════════════════════════════════
-let sortCol = 'data', sortDir = 1; // 1=asc, -1=desc
 
 function sortLanc(col) {
   if (sortCol === col) sortDir *= -1;
