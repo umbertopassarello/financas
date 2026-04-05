@@ -224,7 +224,7 @@ select.inp{cursor:pointer}
 <!-- Login -->
 <div id="loginWrap">
   <div class="lcard">
-    <div class="llogo">V11 Finanças <em>Pessoais</em></div>
+    <div class="llogo">v13 Finanças <em>Pessoais</em></div>
     <div class="lsub">Acesse seu painel financeiro</div>
     <div class="lerr" id="lerr"></div>
     <div class="fgr" style="margin-bottom:10px">
@@ -354,7 +354,7 @@ select.inp{cursor:pointer}
   <div class="cards c3" id="invCards"></div>
   <div class="tw">
     <div class="th_"><span class="tt">Histórico</span></div>
-    <div class="tbl-d sx"><table><thead><tr><th>Tipo</th><th>Mês</th><th>Descrição</th><th style="text-align:right">Valor</th><th style="text-align:right">Saldo após</th></tr></thead><tbody id="invBody"></tbody></table></div>
+    <div class="tbl-d sx"><table><thead><tr><th>Tipo</th><th>Mês</th><th>Descrição</th><th style="text-align:right">Valor</th><th style="text-align:right">Saldo após</th><th></th></tr></thead><tbody id="invBody"></tbody></table></div>
     <div class="mlist" id="invMob"></div>
   </div>
 </div>
@@ -1095,7 +1095,7 @@ async function copiarMesAnterior() {
 // 13. INVESTIMENTOS
 // ═══════════════════════════════════════════════════
 function renderInvest() {
-  const saldo = D.investSaldo || 0;
+  // Saldo SEMPRE recalculado a partir das transações — ignora D.investSaldo
   const all = []; let run = 0;
   allYears().forEach(yr => {
     const yd_ = getYD(yr);
@@ -1106,6 +1106,8 @@ function renderInvest() {
       });
     });
   });
+  const saldo = Math.max(0, run); // saldo real calculado
+  D.investSaldo = saldo;          // manter sincronizado
   const ti = all.filter(t=>t.tipo==='INVESTIMENTOS').reduce((s,t)=>s+t.valor,0);
   const tr = all.filter(t=>t.tipo==='RESGATE').reduce((s,t)=>s+t.valor,0);
   document.getElementById('invCards').innerHTML = [
@@ -1113,11 +1115,18 @@ function renderInvest() {
   ].map(c=>`<div class="icard"><div class="cl">${c.l}</div><div class="cv ${c.c}">${c.v}</div></div>`).join('');
   const rev = [...all].reverse();
   document.getElementById('invBody').innerHTML = rev.length ? rev.map(t =>
-    `<tr><td><span class="tb ${t.tipo==='INVESTIMENTOS'?'tb-i':'tb-r'}">${t.tipo}</span></td><td class="tds">${t.mes}</td><td class="tdd">${t.desc}</td><td class="tdv ${t.tipo==='INVESTIMENTOS'?'a':'p'}" style="text-align:right">${t.tipo==='INVESTIMENTOS'?'+':'-'} ${brl(t.valor)}</td><td class="tdv a" style="text-align:right">${brl(t.saldoApos)}</td></tr>`
-  ).join('') : `<tr><td colspan="5" class="empty">Nenhum registro</td></tr>`;
+    `<tr>
+      <td><span class="tb ${t.tipo==='INVESTIMENTOS'?'tb-i':'tb-r'}">${t.tipo}</span></td>
+      <td class="tds">${t.mes}</td>
+      <td class="tdd">${t.desc}</td>
+      <td class="tdv ${t.tipo==='INVESTIMENTOS'?'a':'p'}" style="text-align:right">${t.tipo==='INVESTIMENTOS'?'+':'-'} ${brl(t.valor)}</td>
+      <td class="tdv a" style="text-align:right">${brl(t.saldoApos)}</td>
+      <td><button class="btn bd bsm" onclick="delInvestTx('${t.id}','${t.mes}')">✕</button></td>
+    </tr>`
+  ).join('') : `<tr><td colspan="6" class="empty">Nenhum registro</td></tr>`;
   document.getElementById('invMob').innerHTML = rev.length ? rev.map(t => {
     const vc = t.tipo==='INVESTIMENTOS'?'var(--ac2)':'var(--pu)';
-    return `<div class="mi"><div class="mico" style="background:rgba(124,106,247,.1)">${t.tipo==='INVESTIMENTOS'?'📈':'💎'}</div><div class="mib"><div class="mid">${t.desc}</div><div class="mis"><span>${t.mes}</span></div></div><div style="text-align:right"><span class="miv" style="color:${vc}">${t.tipo==='INVESTIMENTOS'?'+':'-'} ${brl(t.valor)}</span><div style="font-size:10px;color:var(--tx3);margin-top:2px">Saldo: ${brl(t.saldoApos)}</div></div></div>`;
+    return `<div class="mi"><div class="mico" style="background:rgba(124,106,247,.1)">${t.tipo==='INVESTIMENTOS'?'📈':'💎'}</div><div class="mib"><div class="mid">${t.desc}</div><div class="mis"><span>${t.mes}</span><span>Saldo: ${brl(t.saldoApos)}</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="miv" style="color:${vc}">${t.tipo==='INVESTIMENTOS'?'+':'-'} ${brl(t.valor)}</span><button class="btn bd bsm" style="padding:2px 6px" onclick="delInvestTx('${t.id}','${t.mes}')">✕</button></div></div>`;
   }).join('') : `<div class="empty">Nenhum registro</div>`;
 }
 
@@ -1667,6 +1676,26 @@ function loadCustomCSS() {
 
 // abrir modal gerenciar → renderizar aba ativa
 const _origOpenModal = openModal;
+
+
+async function delInvestTx(id, mesLabel) {
+  if (!confirm('Remover este lançamento de investimento?')) return;
+  let found = false;
+  allYears().forEach(yr => {
+    const yd_ = getYD(yr);
+    MK.forEach(mk => {
+      const txs = yd_.months[mk]?.transactions || [];
+      const idx = txs.findIndex(x => x.id === id);
+      if (idx >= 0) {
+        txs.splice(idx, 1);
+        found = true;
+      }
+    });
+  });
+  if (!found) { alert('Lançamento não encontrado.'); return; }
+  await saveData();
+  renderInvest();
+}
 
 // ═══════════════════════════════════════════════════
 // 19. MODAIS
