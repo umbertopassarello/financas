@@ -12,40 +12,51 @@ function getYearData(data = DATA){
   return period;
 }
 
+// A versão vem da leitura; nunca buscar uma versão nova para salvar dados antigos.
+const recordVersions={financial_data:null,simulation_data:null};
+const recordBusy=new Set();
+function rememberRecord(table,rows){recordVersions[table]=rows.length?{stamp:rows[0].updated_at??null}:null;}
+function conflictError(){const e=new Error('Os dados foram alterados em outra aba ou dispositivo. Recarregue a página antes de tentar novamente.');e.code='SAVE_CONFLICT';return e;}
+async function writeRecord(table,data){
+  if(recordBusy.has(table))throw new Error('Já existe um salvamento em andamento. Aguarde e tente novamente.');
+  recordBusy.add(table);
+  try{
+    const version=recordVersions[table];
+    const stamp=new Date(Math.max(Date.now(),Date.parse(version?.stamp||'')+1||0)).toISOString();
+    const payload={data,updated_at:stamp};
+    let rows;
+    if(version){
+      const filter=version.stamp===null?'is.null':'eq.'+encodeURIComponent(version.stamp);
+      rows=await sb(table+'?user_login=eq.'+encodeURIComponent(CU.login)+'&updated_at='+filter,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+      if(!rows?.length)throw conflictError();
+    }else{
+      try{rows=await sb(table,{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_login:CU.login,...payload})});}
+      catch(e){if(e.code==='23505')throw conflictError();throw e;}
+      if(!rows?.length)throw new Error('O servidor não confirmou a gravação. Recarregue a página para conferir os dados.');
+    }
+    recordVersions[table]={stamp:rows[0].updated_at??stamp};
+  }finally{recordBusy.delete(table);}
+}
 async function loadData(){
-  const rows = await sb(`financial_data?user_login=eq.${CU.login}&select=data`);
-  if(rows.length){
-    DATA = rows[0].data;
-    getYearData();
-  }
-  else { DATA = buildInitialData(); await saveData(); }
-  // Load sim
-  const simRows2 = await sb(`simulation_data?user_login=eq.${CU.login}&select=data`);
-  if(simRows2.length){ const sd = simRows2[0].data; simRows = sd.rows||[]; }
+  const rows=await sb('financial_data?user_login=eq.'+encodeURIComponent(CU.login)+'&select=data,updated_at');
+  rememberRecord('financial_data',rows);
+  if(rows.length){DATA=rows[0].data;getYearData();}
+  else{DATA=buildInitialData();if(!await saveData())throw saveData.lastError;}
+  const simulation=await sb('simulation_data?user_login=eq.'+encodeURIComponent(CU.login)+'&select=data,updated_at');
+  rememberRecord('simulation_data',simulation);
+  simRows=simulation.length?simulation[0].data.rows||[]:[];
 }
-
 async function saveData(){
-  setSyncing();
-  try {
-    getYearData();
-    await sb(`financial_data?user_login=eq.${CU.login}`, {
-      method:'POST', headers:{'Prefer':'resolution=merge-duplicates'},
-      body: JSON.stringify({user_login: CU.login, data: DATA, updated_at: new Date().toISOString()})
-    });
-    setSynced();
-    return true;
-  } catch(e){ setSyncErr(); console.error(e); return false; }
+  saveData.lastError=null;setSyncing();
+  try{getYearData();await writeRecord('financial_data',DATA);setSynced();return true;}
+  catch(e){saveData.lastError=e;setSyncErr(e.code==='SAVE_CONFLICT'?'Conflito: recarregue a página':undefined);console.error(e);return false;}
 }
-
 async function saveSim(){
-  setSyncing();
-  try {
-    await sb(`simulation_data?user_login=eq.${CU.login}`, {
-      method:'POST', headers:{'Prefer':'resolution=merge-duplicates'},
-      body: JSON.stringify({user_login: CU.login, data: {rows: simRows, notes: document.getElementById('simNotes')?.value||'', sal: document.getElementById('simSal')?.value, extra: document.getElementById('simExtra')?.value, ant: document.getElementById('simAnt')?.value, inv: document.getElementById('simInv')?.value}, updated_at: new Date().toISOString()})
-    });
-    setSynced();
-  } catch(e){ setSyncErr(); }
+  saveSim.lastError=null;setSyncing();
+  try{
+    await writeRecord('simulation_data',{rows:simRows,notes:document.getElementById('simNotes')?.value||'',sal:document.getElementById('simSal')?.value,extra:document.getElementById('simExtra')?.value,ant:document.getElementById('simAnt')?.value,inv:document.getElementById('simInv')?.value});
+    setSynced();return true;
+  }catch(e){saveSim.lastError=e;setSyncErr(e.code==='SAVE_CONFLICT'?'Conflito: recarregue a página':undefined);return false;}
 }
 
 function scheduleSave(){ clearTimeout(saveTimeout); saveTimeout = setTimeout(saveData, 1200); }

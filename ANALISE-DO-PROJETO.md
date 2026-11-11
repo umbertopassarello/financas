@@ -94,3 +94,30 @@ valores no gráfico mensal por mouse, foco ou toque; sinal do saldo no dashboard
 Autenticação e políticas → backup → gravação com detecção de conflitos →
 conciliação → competência e caixa → orçamentos e recorrências. Fortalecer os
 dados primeiro permite confiar nas projeções.
+
+## Continuidade em 10/11/2026
+
+Prioridade atual: funcionalidades para uso pessoal, mantendo arquitetura simples.
+Orçamentos por categoria implementados localmente na aba Planejamento:
+limite por mês/ano, consumido, restante/excedido e alertas, com edição/remoção.
+54 testes automatizados aprovados; conferência visual e no banco real pendentes.
+Sequência das próximas funcionalidades registrada em ETAPAS-DE-MELHORIA.md.
+
+Recorrências e parcelas implementadas localmente em 10/11/2026: séries mensais
+finitas, prévia, rateio em centavos, vínculo e numeração nos lançamentos; edição
+individual ou das próximas pendentes. Seleção de ano incluída para atravessar
+dezembro. 70 testes aprovados; validação visual e no Supabase ainda pendentes.
+Detalhes e limites em README.md e ETAPAS-DE-MELHORIA.md.
+
+Agenda financeira implementada localmente em 10/11/2026: contas, faturas por
+cartão/competência e devoluções com saldo restante; filtros, vencidos e baixas
+sem duplicação. Vencimento configurável por cartão e opcional por conta.
+81 testes aprovados; validação visual e no banco real pendentes. Sem cálculo
+automático de fechamento do cartão. Próxima entrega: caixa projetado.
+
+Caixa projetado implementado localmente em 10/11/2026: saldo disponível conferido,
+entradas/compromissos pendentes, cenários com devoluções opcionais, gráfico e
+alerta de saldo negativo. Baixas e recebimentos após a conferência ajustam o
+disponível sem duplicação. 92 testes aprovados; validação visual e no Supabase
+pendentes. Limites e procedimento de conferência em README.md. Próxima entrega:
+acertos de casa.

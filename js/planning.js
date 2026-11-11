@@ -58,7 +58,7 @@ async function persistPlanningChange(change){
   const snapshot=JSON.stringify(DATA);
   try{
     change();
-    if(await saveData()===false)throw new Error('Não foi possível salvar. A alteração foi desfeita; confira a conexão e tente novamente.');
+    if(await saveData()===false)throw new Error(saveData.lastError?.code==='SAVE_CONFLICT'?saveData.lastError.message:'Não foi possível salvar. A alteração foi desfeita; confira a conexão e tente novamente.');
     return true;
   }catch(error){DATA=JSON.parse(snapshot);alert(error.message);return false;}
   finally{planningSaving=false;}

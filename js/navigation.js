@@ -15,16 +15,23 @@ function renderPage(p){
   else if(p==='investimentos') renderInvest();
   else if(p==='receivables') renderReceivables();
   else if(p==='calendario') renderCalendar();
+  else if(p==='agenda') renderAgenda();
+  else if(p==='caixa') renderCash();
   else if(p==='metas') renderMetas();
+  else if(p==='orcamentos') renderBudgets();
   else if(p==='casa') renderCasa();
   else if(p==='simulacao') loadSimUI();
   else if(p==='anual') renderAnual();
   else if(p==='admin') renderAdmin();
 }
 function renderMonthBtns(){
+  document.querySelectorAll('[data-current-year]').forEach(el=>el.textContent=Number(DATA.currentYear)||2026);
+  const years=DATA.years?Object.keys(DATA.years).map(Number):[Number(DATA.currentYear)||2026];
+  document.getElementById('yearSelect').innerHTML=years.sort((a,b)=>a-b).map(y=>'<option value="'+y+'"'+(y===(Number(DATA.currentYear)||2026)?' selected':'')+'>'+y+'</option>').join('');
   const a=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   document.getElementById('monthBtns').innerHTML=a.map((m,i)=>`<button class="mbtn${DATA.currentMonth===i?' active':''}" onclick="setMonth(${i})">${m}</button>`).join('');
 }
+function setYear(year){if(DATA.years?.[year]){DATA.currentYear=year;scheduleSave();renderMonthBtns();renderPage(curPage);}}
 function setMonth(i){DATA.currentMonth=i;scheduleSave();renderMonthBtns();renderPage(curPage);}
 function toggleTheme(){const l=document.body.classList.toggle('light');document.getElementById('themeIcon').textContent=l?'🌙':'☀️';localStorage.setItem('finDash_theme',l?'light':'dark');}
 function openSidebar(){

@@ -90,7 +90,7 @@ test('creating, editing and deleting investment transactions leave the manual ba
   c.document={addEventListener(){},getElementById:id=>({value:values[id]})};
   c.editingLancId=null;c.getYearData=()=>c.DATA.years[2026];c.closeModal=()=>{};c.confirm=()=>true;
   vm.runInContext(read('transactions.js'),c);
-  vm.runInContext(read('pages/lancamentos.js'),c);c.renderLanc=()=>{};
+  vm.runInContext(read('pages/lancamentos.js'),c);c.renderLanc=()=>{};c.renderMonthBtns=()=>{};
   await c.salvarLanc();
   const tx=c.DATA.years[2026].months.nov.transactions[0];
   assert.equal(c.DATA.investSaldo,900);

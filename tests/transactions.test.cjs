@@ -73,7 +73,8 @@ test('editing a legacy expense to paid keeps its card and additional saved field
   let saved;
   c.saveData=async()=>{saved=JSON.parse(JSON.stringify(month));};
   c.alert=message=>{throw Error(message);};
-  vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/pages/lancamentos.js'),'utf8'),c);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/planning.js'),'utf8'),c);
+  c.renderMonthBtns=()=>{};c.seriesBadge=()=>'';vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/pages/lancamentos.js'),'utf8'),c);
   // The fake DOM skips only construction of the checkbox dropdowns.
   c.renderLancFilters=()=>{};
   await c.salvarLanc();

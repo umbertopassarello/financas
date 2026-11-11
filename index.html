@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
-<title>Dashboard Financeiro 2026</title>
+<title>Dashboard Financeiro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
@@ -34,7 +34,7 @@
 <aside class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-title">Finanças</div>
-    <div class="logo-sub">2026</div>
+    <div class="logo-sub" data-current-year>2026</div>
     <div class="logo-user" id="sideUser">—</div>
   </div>
   <nav aria-label="Navegação principal">
@@ -61,6 +61,9 @@
       <span>Contas de Casa</span>
     </button>
     <span class="nav-sec">Planejamento</span>
+    <button class="nav-item" onclick="navTo('agenda')"><span class="nav-icon" aria-hidden="true">▤</span><span>Agenda financeira</span></button>
+    <button class="nav-item" onclick="navTo('caixa')"><span class="nav-icon" aria-hidden="true">↗</span><span>Caixa projetado</span></button>
+    <button class="nav-item" onclick="navTo('orcamentos')"><span class="nav-icon" aria-hidden="true">◴</span><span>Orçamentos</span></button>
     <button class="nav-item" onclick="navTo('receivables')"><span class="nav-icon" aria-hidden="true">↩</span><span>Devoluções a receber</span></button>
     <button class="nav-item" onclick="navTo('calendario')"><span class="nav-icon" aria-hidden="true">▦</span><span>Calendário de gastos</span></button>
     <button class="nav-item" onclick="navTo('simulacao')">
@@ -78,6 +81,7 @@
   </nav>
   <div class="month-sel">
     <span class="month-lbl">Mês ativo</span>
+    <label class="month-lbl" for="yearSelect">Ano</label><select class="inp" id="yearSelect" onchange="setYear(Number(this.value))" style="margin-bottom:10px"></select>
     <div class="month-grid" id="monthBtns"></div>
   </div>
   <div class="sidebar-bottom">
@@ -92,7 +96,7 @@
   <button class="topbar-menu" id="menuToggle" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false" onclick="openSidebar()">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
   </button>
-  <span class="topbar-title">Finanças <em style="color:var(--accent2);font-style:italic">2026</em></span>
+  <span class="topbar-title">Finanças <em style="color:var(--accent2);font-style:italic" data-current-year>2026</em></span>
   <div class="topbar-actions">
     <span class="sync-indicator"><span class="sync-dot" id="syncDot"></span><span id="syncMsg">Sincronizado</span></span>
   </div>
@@ -101,6 +105,44 @@
 <!-- MAIN -->
 <main class="main" id="mainArea">
 
+<section class="page" id="page-orcamentos">
+  <div class="page-header"><div><h1 class="page-title">Orçamentos <em>por categoria</em></h1><p class="page-subtitle" id="budgetPeriod"></p></div></div>
+  <p class="feature-note">Defina limites padrão ou ajustes para o mês ativo. O consumo inclui todas as saídas da categoria, pagas e pendentes, sem aplicar filtros. Alertas aparecem a partir de 80% do limite. O padrão vale para todos os meses e anos sem ajuste próprio, inclusive meses anteriores. Ajustes e remoções específicos de um mês são preservados ao mudar o padrão.</p>
+  <button class="btn btn-g" id="copyPreviousBudgets" style="margin-bottom:14px">Copiar limites do mês anterior</button>
+  <form class="card" id="budgetForm" style="margin-bottom:20px">
+    <div class="fg f2"><div class="fgroup"><label class="fl" for="budgetCategory">Categoria</label><select class="inp" id="budgetCategory" required></select></div><div class="fgroup"><label class="fl" for="budgetLimit">Limite mensal (R$)</label><input class="inp" id="budgetLimit" type="number" min="0" step="0.01" required placeholder="Ex.: 500,00"></div></div>
+    <div class="fgroup" style="margin-top:14px"><label class="fl" for="budgetScope">Aplicar limite</label><select class="inp" id="budgetScope"><option value="month">Somente neste mês</option><option value="default">Padrão para todos os meses</option></select></div>
+    <button class="btn btn-p" type="submit" style="margin-top:14px">Salvar limite</button>
+    <p id="budgetMessage" role="status" aria-live="polite" class="field-help"></p>
+  </form>
+  <div class="cards c3" id="budgetList"></div>
+</section>
+<section class="page" id="page-agenda">
+  <div class="page-header"><div><h1 class="page-title">Agenda <em>financeira</em></h1><p class="page-subtitle">Contas, faturas e devoluções pendentes de todos os anos</p></div></div>
+  <p class="feature-note">As contas usam o vencimento informado ou, na ausência dele, a data do lançamento. As faturas agrupam compras pendentes do cartão no mês de competência e usam o dia configurado abaixo; sem configuração, ficam sem vencimento. O fechamento do cartão ainda não é calculado. Devoluções usam a data prevista e o saldo restante.</p>
+  <div class="cards c4" id="agendaSummary"></div>
+  <div class="filter-row">
+    <label class="fl" for="agendaPeriod">Período</label><select class="inp" id="agendaPeriod" onchange="renderAgenda()"><option value="all">Todas as pendências</option><option value="overdue">Vencidos</option><option value="week">Hoje e próximos 7 dias</option><option value="month">Mês e ano ativos</option><option value="undated">Sem vencimento</option></select>
+    <label class="fl" for="agendaType">Tipo</label><select class="inp" id="agendaType" onchange="renderAgenda()"><option value="all">Todos</option><option value="expense">Contas</option><option value="invoice">Faturas</option><option value="receivable">Devoluções a receber</option></select>
+  </div>
+  <p class="field-help" id="agendaCount" role="status" aria-live="polite"></p>
+  <div class="obligations-list" id="agendaList"></div>
+  <details class="card" style="margin-top:20px"><summary>Configurar vencimento dos cartões</summary>
+    <form id="agendaCardForm" style="margin-top:14px"><div class="fg f2"><div class="fgroup"><label class="fl" for="agendaCard">Cartão</label><select class="inp" id="agendaCard" onchange="agendaCardChange()"></select></div><div class="fgroup"><label class="fl" for="agendaDueDay">Dia do vencimento</label><input class="inp" id="agendaDueDay" type="number" min="1" max="31" step="1" required></div></div><p class="field-help">O vencimento fica no mês de competência do lançamento. Dia 31 se ajusta ao último dia em meses curtos. Alterar o dia atualiza também a previsão das faturas antigas ainda pendentes.</p><button class="btn btn-p" type="submit">Salvar vencimento</button></form>
+  </details>
+</section>
+<section class="page" id="page-caixa">
+  <div class="page-header"><div><h1 class="page-title">Caixa <em>projetado</em></h1><p class="page-subtitle">Saldo disponível conferido mais entradas e compromissos futuros</p></div><button class="btn btn-g" onclick="navTo('agenda')">Abrir agenda</button></div>
+  <p class="feature-note">Informe a soma disponível nas contas que você usa para os lançamentos, já considerando recebimentos e pagamentos realizados. Investimentos, metas e saldos anteriores mensais não são somados ao saldo inicial. Registros pagos/recebidos após a conferência ajustam o disponível; movimentações pendentes entram na projeção. Esta visão usa todos os anos, independentemente do mês ativo.</p>
+  <form class="card" id="cashBalanceForm" style="margin-bottom:20px"><label class="fl" for="cashBalance">Saldo disponível conferido hoje (R$)</label><input class="inp" id="cashBalance" type="number" step="0.01" required placeholder="Ex.: 1500,00"><p class="field-help" id="cashCheckpointNote"></p><button class="btn btn-p" type="submit" style="margin-top:12px">Conferir saldo de hoje</button></form>
+  <div class="filter-row"><label class="fl" for="cashHorizon">Período a partir de hoje</label><select class="inp" id="cashHorizon" onchange="renderCash()"><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option><option value="180">180 dias</option></select><label class="filter-option" for="cashReceivables"><input type="checkbox" id="cashReceivables" onchange="renderCash()">Incluir devoluções previstas</label></div>
+  <div class="cards c4" id="cashSummary"></div>
+  <p class="feature-note" id="cashAlert" role="status" aria-live="polite"></p>
+  <div class="card" id="cashChart" style="margin-bottom:20px"></div>
+  <div class="card" id="cashWarnings" style="margin-bottom:20px"></div>
+  <p class="field-help">Os saldos são ao fim do dia, sem prever a ordem dos pagamentos dentro dele. Vencidos são posicionados em hoje apenas neste cenário. Faturas seguem a configuração da agenda, sem cálculo de fechamento. Para entradas previstas, cadastre um lançamento de Entrada com status Pendente e data prevista; registre cada recebimento apenas uma vez.</p>
+  <h2 class="section-heading">Dias com movimentação</h2><div id="cashDays"></div>
+</section>
 <!-- DASHBOARD -->
 <div class="page active" id="page-dashboard">
   <div class="greeting">
@@ -129,6 +171,7 @@
     <div><h1 class="page-title">Lançamentos <em id="lancMes">—</em></h1><p class="page-subtitle">Movimentações do mês</p></div>
     <div class="page-actions">
       <button class="btn btn-w btn-sm" onclick="openQuitarFatura()">✓ Quitar fatura em lote</button>
+      <button class="btn btn-g" onclick="openSeries()">Recorrências e parcelas</button>
       <button class="btn btn-p" onclick="openAddLanc()">+ Novo lançamento</button>
     </div>
   </div>
@@ -185,7 +228,7 @@
 </div>
 <!-- METAS -->
 <div class="page" id="page-metas">
-  <div class="page-header"><div><h1 class="page-title">Metas <em>2026</em></h1><p class="page-subtitle">Objetivos financeiros</p></div><div class="page-actions"><button class="btn btn-p" onclick="openNewMeta()">+ Nova meta</button></div></div>
+  <div class="page-header"><div><h1 class="page-title">Metas <em>financeiras</em></h1><p class="page-subtitle">Objetivos financeiros</p></div><div class="page-actions"><button class="btn btn-p" onclick="openNewMeta()">+ Nova meta</button></div></div>
   <div id="metasGrid" class="cards c3"></div>
   <div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Histórico de Aportes</span></div>
     <div class="tbl-desktop scroll-x"><table><thead><tr><th>Meta</th><th>Descrição</th><th>Data</th><th style="text-align:right">Valor</th></tr></thead><tbody id="metaAportesTbody"></tbody></table></div>
@@ -260,7 +303,7 @@
 
 <!-- RESUMO ANUAL -->
 <div class="page" id="page-anual">
-  <div class="page-header"><div><h1 class="page-title">Resumo <em>Anual</em></h1><p class="page-subtitle">Visão consolidada de 2026</p></div><div class="page-actions"><button class="btn btn-g btn-sm" id="btnCat" onclick="toggleCatAnual()">📊 Ver por categoria</button></div></div>
+  <div class="page-header"><div><h1 class="page-title">Resumo <em>Anual</em></h1><p class="page-subtitle">Visão consolidada de <span data-current-year>2026</span></p></div><div class="page-actions"><button class="btn btn-g btn-sm" id="btnCat" onclick="toggleCatAnual()">📊 Ver por categoria</button></div></div>
   <div class="cards c3" id="anualCards"></div>
   <div class="card" style="margin-bottom:16px"><div class="sec-title">Evolução Mensal</div><div id="anualBars" style="display:flex;align-items:flex-end;gap:4px;height:150px;padding:0 2px"></div><div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap"><span style="font-size:10px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:var(--green);border-radius:2px;display:inline-block"></span>Entradas</span><span style="font-size:10px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:var(--red);border-radius:2px;display:inline-block"></span>Gastos</span><span style="font-size:10px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:var(--accent);border-radius:2px;display:inline-block"></span>Invest.</span></div></div>
   <div id="anualCatPanel" style="display:none;margin-bottom:16px"><div class="card"><div class="sec-title">Gastos por Categoria — Ano</div><div id="anualCatChart"></div></div></div>
@@ -287,9 +330,11 @@
         <div class="fgroup" style="grid-column:1/-1"><label class="fl">Descrição</label><input class="inp" type="text" id="lDesc" placeholder="Ex: Moto 5/12, Academia..."></div>
         <div class="fgroup"><label class="fl">Valor (R$)</label><input class="inp" type="number" id="lValor" step="0.01" placeholder="0,00"></div>
         <div class="fgroup"><label class="fl">Data</label><input class="inp" type="date" id="lData"></div>
+        <div class="fgroup"><label class="fl" for="lDue">Vencimento da conta (opcional)</label><input class="inp" type="date" id="lDue"><span class="field-help">Para cartões de crédito, a agenda usa o vencimento da fatura.</span></div>
         <div class="fgroup"><label class="fl">Categoria</label><select class="inp" id="lCat"><option value="">—</option><option>Alimentação</option><option>Assinaturas</option><option>Beleza / Cuidados</option><option>Casa / Necessários</option><option>Comida / Besteira</option><option>Compras Gerais</option><option>Entrada</option><option>Gasolina / Transporte</option><option>Investimentos</option><option>Lazer / Saídas</option><option>Moda / Perfumes</option><option>Moto</option><option>Outros</option><option>Presentes</option><option>Saúde</option><option>Viagem</option></select></div>
         <div class="fgroup"><label class="fl" for="lForma">Forma de pagamento</label><select class="inp" id="lForma" onchange="onPaymentMethodChange()"><option value="nao_informado">Não informado</option><option value="credito">Cartão de crédito</option><option value="debito">Cartão de débito</option><option value="pix">PIX</option><option value="dinheiro">Dinheiro</option><option value="boleto">Boleto</option><option value="transferencia">Transferência</option><option value="outro">Outro</option></select></div>
         <div class="fgroup" id="bancoGrp"><label class="fl" for="lBanco">Cartão utilizado</label><select class="inp" id="lBanco"></select></div>
+        <div class="fgroup" id="seriesEditGroup" style="display:none;grid-column:1/-1"><label class="fl" for="seriesEditScope">Editar série</label><select class="inp" id="seriesEditScope"><option value="one">Somente esta ocorrência</option><option value="future">Esta e as próximas pendentes</option></select><p class="field-help">O valor informado será o valor de cada ocorrência alterada. Datas futuras seguem o dia escolhido. Ocorrências posteriores já pagas são preservadas; alterar parcelas muda o total da compra. A quantidade e a numeração são mantidas.</p></div>
         <div class="fgroup"><label class="fl" for="lStatus">Status</label><select class="inp" id="lStatus"><option value="pago">Pago</option><option value="pendente">Pendente</option></select></div>
       </div>
     </div>
@@ -297,6 +342,28 @@
   </div>
 </div>
 
+<div class="mo" id="moSeries"><div class="mo-box">
+  <div class="mo-head"><span class="mo-title">Recorrências e parcelas</span><button class="btn btn-g btn-sm" onclick="closeModal('moSeries')">✕</button></div>
+  <form id="seriesForm">
+    <div class="mo-body">
+      <p class="feature-note">Gere de 2 a 120 lançamentos mensais pendentes. Recorrência usa o valor de cada mês; parcelamento divide o total da compra, distribuindo os centavos restantes nas primeiras parcelas. Meses e anos necessários serão criados. Nenhuma cobrança é feita automaticamente.</p>
+      <div class="fg f2">
+        <div class="fgroup"><label class="fl" for="sKind">Modalidade</label><select class="inp" id="sKind"><option value="recurring">Recorrência mensal</option><option value="installments">Compra parcelada</option></select></div>
+        <div class="fgroup"><label class="fl" for="sCount">Quantidade de meses / parcelas</label><input class="inp" id="sCount" type="number" min="2" max="120" value="12" required></div>
+        <div class="fgroup" style="grid-column:1/-1"><label class="fl" for="sDesc">Descrição</label><input class="inp" id="sDesc" required placeholder="Ex.: Academia ou compra de notebook"></div>
+        <div class="fgroup"><label class="fl" for="rsAmount">Valor mensal / total da compra (R$)</label><input class="inp" id="rsAmount" type="number" min="0.01" step="0.01" required></div>
+        <div class="fgroup"><label class="fl" for="rsDate">Primeiro vencimento</label><input class="inp" id="rsDate" type="date" required></div>
+        <div class="fgroup"><label class="fl" for="sCategory">Categoria</label><select class="inp" id="sCategory"></select></div>
+        <div class="fgroup"><label class="fl" for="sMethod">Forma de pagamento</label><select class="inp" id="sMethod"><option value="boleto">Boleto</option><option value="credito">Cartão de crédito</option><option value="debito">Cartão de débito</option><option value="pix">PIX</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option><option value="outro">Outro</option></select></div>
+        <div class="fgroup"><label class="fl" for="sCard">Cartão (para crédito ou débito)</label><select class="inp" id="sCard"></select></div>
+      </div>
+      <p class="field-help">Dias 29, 30 ou 31 se ajustam ao último dia em meses mais curtos, retomando o dia original no mês seguinte. As saídas geradas afetam os orçamentos de cada mês.</p>
+      <button class="btn btn-g" type="button" onclick="previewSeries()">Conferir prévia</button>
+      <p id="seriesPreview" class="field-help" role="status" style="white-space:pre-line;max-height:220px;overflow:auto"></p>
+    </div>
+    <div class="mo-foot"><button class="btn btn-g" type="button" onclick="closeModal('moSeries')">Cancelar</button><button class="btn btn-p" type="submit">Gerar lançamentos</button></div>
+  </form>
+</div></div>
 <!-- QUITAR FATURA -->
 <div class="mo" id="moQuitar">
   <div class="mo-box" style="max-width:440px">
@@ -400,13 +467,17 @@
 <script src="js/transactions.js"></script>
 <script src="js/planning.js"></script>
 <script src="js/backup.js"></script>
+<script src="js/series.js"></script>
 <script src="js/household.js"></script>
 <script src="js/charts.js"></script>
+<script src="js/pages/orcamentos.js"></script>
 <script src="js/pages/dashboard.js"></script>
 <script src="js/pages/lancamentos.js"></script>
 <script src="js/pages/investimentos.js"></script>
 <script src="js/pages/pendencias.js"></script>
 <script src="js/pages/calendario.js"></script>
+<script src="js/pages/agenda.js"></script>
+<script src="js/pages/caixa.js"></script>
 <script src="js/pages/metas.js"></script>
 <script src="js/pages/casa.js"></script>
 <script src="js/pages/simulacao.js"></script>

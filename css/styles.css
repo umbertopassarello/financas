@@ -459,3 +459,4 @@ th[aria-sort="ascending"],th[aria-sort="descending"]{color:var(--accent2);}
   .filtered-summary .card{padding:12px;}
   .filtered-summary .card-val{font-size:clamp(17px,4.4vw,24px);}
 }
+.payment-status.is-overdue{color:var(--red);background:rgba(244,100,95,.12);}

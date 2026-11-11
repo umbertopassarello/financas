@@ -3,7 +3,7 @@
 // =====================================================================
 function setSyncing(){const d=document.getElementById('syncDot'),m=document.getElementById('syncMsg');if(d){d.className='sync-dot saving';m.textContent='Salvando...';}}
 function setSynced(){const d=document.getElementById('syncDot'),m=document.getElementById('syncMsg');if(d){d.className='sync-dot';m.textContent='Sincronizado';}}
-function setSyncErr(){const d=document.getElementById('syncDot'),m=document.getElementById('syncMsg');if(d){d.className='sync-dot error';m.textContent='Erro ao salvar';}}
+function setSyncErr(message){const d=document.getElementById('syncDot'),m=document.getElementById('syncMsg');if(d){d.className='sync-dot error';m.textContent=message||'Erro ao salvar';}}
 
 // =====================================================================
 // APP INIT

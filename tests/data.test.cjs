@@ -10,7 +10,7 @@ function setup(data) {
     DATA: data, CU: { login: 'test' }, simRows: [],
     setSyncing() {}, setSynced() {}, setSyncErr() {}, console,
     async sb(route, options) {
-      if (options) { writes.push(JSON.parse(options.body)); return []; }
+      if (options) { writes.push(JSON.parse(options.body)); return [{updated_at: JSON.parse(options.body).updated_at}]; }
       return route.startsWith('financial_data') ? [{ data }] : [];
     },
   });
@@ -57,4 +57,37 @@ test('rejects an unavailable selected year without writing to storage', async ()
   const { context, writes } = setup({ currentYear: 2026, years: { 2025: { months: {} } } });
   await assert.rejects(vm.runInContext('loadData()', context), { code: 'INVALID_FINANCIAL_DATA' });
   assert.equal(writes.length, 0);
+});
+
+for(const table of ['financial_data','simulation_data'])test(table+' rejects stale writes atomically and accepts reload',async()=>{
+ const {context:c}=setup({months:{}});c.document={getElementById:()=>({value:'0'})};
+ let server={updated_at:'2026-11-10T10:00:00+00:00'},calls=[];
+ c.sb=async(route,options)=>{
+  calls.push({route,options});
+  if(!options)return [{data:{months:{}},...server}];
+  const expected='updated_at=eq.'+encodeURIComponent(server.updated_at);
+  if(!route.includes(expected))return [];
+  server={updated_at:JSON.parse(options.body).updated_at};return [server];
+ };
+ c.rememberRecord(table,[server]);server={updated_at:'2026-11-10T10:01:00+00:00'};
+ const save=table==='financial_data'?c.saveData:c.saveSim;
+ assert.equal(await save(),false);assert.equal(save.lastError.code,'SAVE_CONFLICT');assert.equal(server.updated_at,'2026-11-10T10:01:00+00:00');
+ c.rememberRecord(table,[server]);assert.equal(await save(),true);assert.equal(await save(),true);
+ assert.equal(calls[0].options.method,'PATCH');assert.match(calls[0].route,/user_login=eq.test/);
+});
+test('concurrent creation never overwrites an existing financial document',async()=>{
+ const {context:c}=setup({months:{}});let method;
+ c.sb=async(route,options)=>{method=options.method;throw {code:'23505'};};
+ assert.equal(await c.saveData(),false);assert.equal(method,'POST');assert.equal(c.saveData.lastError.code,'SAVE_CONFLICT');
+});
+test('legacy null timestamp uses atomic null filter and learns returned version',async()=>{
+ const {context:c}=setup({months:{}});c.rememberRecord('financial_data',[{updated_at:null}]);let route;
+ c.sb=async(r,options)=>{route=r;return [{updated_at:JSON.parse(options.body).updated_at}];};
+ assert.equal(await c.saveData(),true);assert.match(route,/updated_at=is.null/);
+ assert.equal(await c.saveData(),true);assert.match(route,/updated_at=eq./);
+});
+test('pending saves cannot overlap for the same document',async()=>{
+ const {context:c}=setup({months:{}});let finish,writes=0;
+ c.sb=async()=>{writes++;return await new Promise(resolve=>finish=resolve);};
+ const first=c.saveData();assert.equal(await c.saveData(),false);assert.equal(writes,1);finish([{updated_at:'2026-11-10T11:00:00Z'}]);assert.equal(await first,true);
 });
