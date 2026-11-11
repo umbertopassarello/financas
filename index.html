@@ -81,6 +81,7 @@
     <div class="month-grid" id="monthBtns"></div>
   </div>
   <div class="sidebar-bottom">
+    <button class="btn btn-g btn-sm" onclick="openBackup()" style="grid-column:1/-1">Backup e exportação</button>
     <button class="btn btn-g btn-sm" onclick="toggleTheme()" style="justify-content:center"><span id="themeIcon">☀️</span> <span>Tema</span></button>
     <button class="btn btn-g btn-sm" onclick="doLogout()" style="justify-content:center">↩ Sair</button>
   </div>
@@ -380,6 +381,16 @@
   <div class="mo-body fg"><p class="feature-note">Informe o valor atual da carteira. Para recomeçar em zero, informe 0. O histórico de transações e as pendências serão preservados.</p><div class="fgroup"><label class="fl" for="investmentBalance">Saldo conferido (R$)</label><input class="inp" type="number" id="investmentBalance" min="0" step="0.01" required></div></div>
   <div class="mo-foot"><button type="button" class="btn btn-g" onclick="closeModal('moInvestmentBalance')">Cancelar</button><button type="submit" class="btn btn-p">Atualizar saldo manual</button></div>
 </form></div></div>
+<div class="mo" id="moBackup"><div class="mo-box">
+  <div class="mo-head"><h2 class="mo-title">Backup e exportação</h2><button class="btn btn-g btn-sm" onclick="closeModal('moBackup')" aria-label="Fechar">✕</button></div>
+  <div class="mo-body fg">
+    <p class="feature-note">O backup JSON reúne os dados financeiros carregados de todos os anos, contas de casa, metas, investimentos, pendências e a simulação salva. Não inclui sua senha ou sessão de acesso.</p>
+    <button class="btn btn-p" id="exportBackupButton" onclick="exportBackup()">Baixar backup completo (JSON)</button>
+    <button class="btn btn-g" onclick="exportTransactionsCSV()">Exportar lançamentos de todos os anos (CSV)</button>
+    <p class="field-help">O CSV serve para conferir os lançamentos em uma planilha. A restauração do JSON será implementada em uma etapa posterior, com validação e prévia dos dados.</p>
+    <p id="backupResult" class="feature-note" role="status" aria-live="polite"></p>
+  </div>
+</div></div>
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
 <script src="js/app.js"></script>
@@ -388,6 +399,7 @@
 <script src="js/navigation.js"></script>
 <script src="js/transactions.js"></script>
 <script src="js/planning.js"></script>
+<script src="js/backup.js"></script>
 <script src="js/household.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/pages/dashboard.js"></script>

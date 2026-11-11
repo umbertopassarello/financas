@@ -15,6 +15,7 @@ O carregamento das fontes e a comunicação com o Supabase dependem de internet.
 - `js/navigation.js`: navegação, seleção de mês, tema e menu lateral.
 - `js/transactions.js`: pagamentos, compatibilidade dos registros antigos, filtros e totais.
 - `js/planning.js`: calendário, pendências e baixas vinculadas aos lançamentos.
+- `js/backup.js`: backup JSON e exportação CSV, sem gravar no servidor.
 - `js/household.js`: cálculo do rateio e cópia de despesas da casa.
 - `js/charts.js`: gráficos de categorias e evolução mensal.
 - `js/pages/`: lógica de cada tela, em arquivos separados.
