@@ -1,0 +1,8 @@
+{
+  "name": "financas-whatsapp",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node index.js", "test": "node --test test.mjs" },
+  "dependencies": { "@whiskeysockets/baileys": "^7.0.0-rc.9", "qrcode-terminal": "^0.12.0" },
+  "engines": { "node": ">=20" }
+}

@@ -3,6 +3,59 @@
 Abra `index.html` no navegador para acessar a aplicação. Não há etapa de build.
 O carregamento das fontes e a comunicação com o Supabase dependem de internet.
 
+## Assistente pelo WhatsApp
+
+O serviço opcional em `whatsapp/` conecta um dispositivo por QR Code, recebe
+comandos de um único contato autorizado e lê ou altera o mesmo documento do
+Supabase. Requer Node.js 20 ou superior e um computador ligado com internet.
+Use uma conta de WhatsApp para o assistente e outra para enviar os comandos.
+
+1. Em `whatsapp/`, copie `.env.example` para `.env` e preencha a URL e chave do
+   Supabase, o login usado no aplicativo e o JID do contato autorizado, por exemplo
+   `5511999999999@s.whatsapp.net` (código do país, DDD e número, sem sinais).
+   Alguns contatos podem ser identificados pelo WhatsApp com um JID `@lid`; nesse
+   caso é necessário configurar o identificador correspondente. O serviço aceita
+   somente o JID exato, mensagens individuais e texto; não responde a grupos.
+2. Execute `npm install` e depois `node --env-file=.env index.js` dentro dessa pasta.
+3. No celular da conta do assistente, abra **Aparelhos conectados** e leia o QR
+   exibido no terminal. Envie `ajuda` a essa conta a partir do contato autorizado.
+
+Para conversar em linguagem natural, crie uma chave da Gemini API no Google AI
+Studio e configure `GEMINI_API_KEY` no `.env`, sem compartilhá-la. O modelo pode
+ser ajustado em `GEMINI_MODEL`; a disponibilidade e os limites dependem da conta.
+Exemplos: “gastei 50 reais de gasolina hoje”, “quanto gastei este mês?” ou
+“remova o lançamento mercado”. O serviço solicita confirmação antes de alterar
+  os dados; responda `confirmar` para aceitar ou `cancelar` para desistir.
+  Remoções com mais de um resultado exigem escolher o ID em `listar`.
+Consultas são relativas a um mês, e análises usam os totais por categoria desse
+mês e, quando disponível, do anterior. Os totais são calculados localmente e
+incluem pagos e pendentes; a análise não é saldo bancário. A IA pode errar, então
+confira os valores e a prévia. Não há memória de conversa entre mensagens.
+
+A mensagem enviada é compartilhada com o Google para interpretação; em análises,
+os totais e categorias também são enviados, sem as descrições dos lançamentos.
+No nível gratuito, o Google pode usar o conteúdo para melhorar seus produtos.
+Se o identificador do contato pessoal não corresponder ao configurado, defina
+temporariamente `WHATSAPP_SHOW_JIDS=1`, reinicie e envie uma mensagem pessoal ao
+assistente. O identificador recebido aparecerá no terminal; use-o em
+`WHATSAPP_JID`, volte a opção para `0` e reinicie. Essa opção registra os
+identificadores de todos os contatos individuais que enviarem mensagens.
+
+Exemplos: `gasto | 45,90 | Mercado | Alimentação | 2026-11-24`,
+`entrada | 1000 | Salário | Entrada`, `listar | 2026-11`,
+`relatório | 2026-11` e `remover | 2026-11 | ID`. A data de inclusão e o mês
+de consulta são opcionais. Inclusões são marcadas como pagas, com forma de
+pagamento não informada. Alterações exigem confirmação em até cinco minutos;
+o mês/ano já deve existir no aplicativo. Lançamentos vinculados a pendências
+devem ser corrigidos pelo aplicativo. A confirmação é descartada ao reiniciar.
+
+O serviço usa a biblioteca não oficial Baileys, sujeita a mudanças no WhatsApp e
+a restrições da conta. Proteja `.env` e a pasta `auth/`: contêm credenciais e
+acesso à sessão. A chave pública do Supabase não garante isolamento dos dados;
+revise as políticas de acesso do banco antes de usar dados financeiros reais.
+O aplicativo e o assistente detectam gravações concorrentes, mas dados editados
+em uma aba já aberta precisam ser recarregados após alterações pelo assistente.
+
 ## Organização
 
 - `index.html`: estrutura das telas e dos modais.
