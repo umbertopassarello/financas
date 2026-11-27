@@ -11,6 +11,34 @@ function setup(){
   vm.runInContext(read('planning.js'),context);
   return context;
 }
+test('investment reviews change the balance once and can link a withdrawal replacement atomically',async()=>{
+  const c=setup();
+  c.document={getElementById:()=>({addEventListener(){}})};
+  vm.runInContext(read('series.js'),c);
+  vm.runInContext(read('pages/investimentos.js'),c);
+  const transactions=c.DATA.years[2025].months.dez.transactions;
+  transactions.push(
+    {id:'aporte',tipo:'INVESTIMENTOS',valor:125.25,investmentReview:'pending'},
+    {id:'resgate',tipo:'RESGATE',valor:200.75,investmentReview:'pending',desc:'Emergência',data:'2025-12-10'},
+    {id:'ignorar',tipo:'RESGATE',valor:20,investmentReview:'pending'},
+    {id:'antigo',tipo:'INVESTIMENTOS',valor:500},
+  );
+  c.reviewInvestmentTransaction('aporte','apply');
+  c.reviewInvestmentTransaction('ignorar','skip');
+  assert.equal(c.DATA.investSaldo,1025.25);
+  assert.throws(()=>c.reviewInvestmentTransaction('aporte','apply'));
+  const before=JSON.stringify(c.DATA);
+  c.saveData=async()=>false;
+  assert.equal(await c.persistPlanningChange(()=>c.reviewInvestmentTransaction('resgate','replace')),false);
+  assert.equal(JSON.stringify(c.DATA),before);
+  c.reviewInvestmentTransaction('resgate','replace');
+  assert.equal(c.DATA.investSaldo,824.50);
+  assert.equal(c.DATA.obligations.length,1);
+  assert.equal(c.DATA.obligations[0].sourceYear,2025);
+  assert.equal(c.DATA.obligations[0].sourceMonth,'dez');
+  assert.equal(c.DATA.obligations[0].amount,200.75);
+  assert.equal(c.pendingInvestmentReviews().length,0);
+});
 test('partial receipts create one income in its date and preserve the original year and investment balance',()=>{
   const c=setup();
   const item={id:'r',kind:'receivable',description:'Empresa',amount:200,payments:[]};

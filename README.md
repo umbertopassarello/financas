@@ -126,16 +126,15 @@ O **Calendário de gastos** usa as datas das saídas do mês e ano selecionados,
 incluindo gastos pagos e pendentes. Clique em um dia para ver os detalhes.
 Saídas sem data ou com data de outro mês ficam fora do calendário, com aviso.
 
-O saldo de investimentos agora é **manual**. Aportes, resgates, metas e reposições
-não o alteram automaticamente. Em **Conferir saldo**, informe o valor real da
-carteira ou 0 para recomeçar; o valor anterior fica no histórico de conferências.
-O histórico de transações é preservado. Os totais anuais de aportes e resgates
-continuam dependendo da qualidade dos lançamentos antigos.
+Em **Carteira de Investimentos → Conferir saldo**, informe o valor atual da
+carteira. Novos aportes e resgates aparecem em **Movimentações para revisar**.
+Some o aporte ao saldo, desconte o resgate ou escolha **Manter saldo** se a
+movimentação já estiver incluída na conferência.
 
-Em **Resgates a repor**, vincule um resgate existente ou cadastre uma pendência
-manual. Cada reposição parcial ou total cria um lançamento de investimentos na
-data informada, sem alterar o saldo manual. As pendências não são criadas
-automaticamente a partir de resgates antigos e não mudam com a seleção do mês.
+Ao descontar um resgate, você pode criar uma pendência em **Resgates a repor**.
+Cada reposição parcial ou total gera um aporte que também passa pela revisão.
+Para reconciliar o saldo após corrigir uma movimentação já aplicada, use
+**Conferir saldo**.
 
 ## Orçamentos por categoria
 

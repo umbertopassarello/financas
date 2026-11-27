@@ -23,7 +23,7 @@ async function doLogin(){
     localStorage.setItem('finDash_sess', JSON.stringify(CU));
     setLoading('Carregando dados...');
     await loadData();
-    startApp();
+    await startApp();
   } catch(e) {
     document.getElementById('appLoading').style.display = 'none';
     document.getElementById('loginScreen').classList.add('show');

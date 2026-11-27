@@ -18,7 +18,7 @@ window.addEventListener('load', async () => {
       CU = JSON.parse(sess);
       setLoading('Carregando dados...');
       await loadData();
-      startApp();
+      await startApp();
     } catch(e) {
       localStorage.removeItem('finDash_sess');
       showLoginScreen();
@@ -31,7 +31,8 @@ window.addEventListener('load', async () => {
 function setLoading(msg){ document.getElementById('loadingMsg').textContent = msg; }
 function hideLoading(){ document.getElementById('appLoading').style.display = 'none'; }
 function showLoginScreen(){ hideLoading(); document.getElementById('loginScreen').classList.add('show'); }
-function startApp(){
+async function startApp(){
+  await refreshOpenRecurrences();
   hideLoading();
   document.getElementById('loginScreen').classList.remove('show');
   document.getElementById('sidebar').style.display = 'flex';

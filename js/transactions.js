@@ -19,6 +19,12 @@ function cardInfo(key){
   const custom=DATA.customBanks?.[key];
   return BANKS[key] || {l:typeof custom==='string'?custom:(custom?.l||custom?.nome||custom?.name||key||'Sem cartão'),c:''};
 }
+function registeredCardKeys(){
+  return [...new Set([...Object.keys(BANKS),...Object.keys(DATA.customBanks||{})])].filter(key=>key!=='pago');
+}
+function registeredCategories(){
+  return [...new Set([...CATS,...(DATA.customCats||[])])];
+}
 function paymentBadges(t){
   const p=paymentInfo(t),card=cardInfo(p.card);
   return `<span class="payment-label">${escapeHTML(PAYMENT_METHODS[p.method]||p.method)}</span>${p.card?`<span class="btag ${escapeHTML(card.c)}">${escapeHTML(card.l)}</span>`:''}<span class="payment-status ${p.status==='pago'?'is-paid':'is-pending'}">${p.status==='pago'?'Pago':'Pendente'}</span>`;

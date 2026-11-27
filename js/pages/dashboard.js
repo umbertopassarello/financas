@@ -27,7 +27,7 @@ function renderDash(){
   renderCategoryChart(txs);
   renderMonthlyChart();
   // Recent tx desktop
-  document.getElementById('dashTx').innerHTML=txs.slice(0,6).map(t=>{const vc=t.tipo==='ENTRADA'?'g':t.tipo==='INVESTIMENTOS'?'a':t.tipo==='RESGATE'?'p':'r';const sg=t.tipo==='ENTRADA'||t.tipo==='RESGATE'?'+':t.tipo==='INVESTIMENTOS'?'◈':'-';return`<tr><td class="td-desc">${t.desc}</td><td class="td-val ${vc}">${sg} ${brl(t.valor)}</td><td class="td-sm">${t.categoria||'—'}</td><td><span class="payment-badges">${paymentBadges(t)}</span></td></tr>`;}).join('')||`<tr><td colspan="4" class="empty">Nenhuma transação</td></tr>`;
+  document.getElementById('dashTx').innerHTML=txs.slice(0,6).map(t=>{const vc=t.tipo==='ENTRADA'?'g':t.tipo==='INVESTIMENTOS'?'a':t.tipo==='RESGATE'?'p':'r';const sg=t.tipo==='ENTRADA'||t.tipo==='RESGATE'?'+':t.tipo==='INVESTIMENTOS'?'◈':'-';return`<tr><td class="td-desc">${t.desc}</td><td class="td-val ${vc}">${sg} ${brl(t.valor)}</td><td class="td-sm">${escapeHTML(t.categoria||'—')}</td><td><span class="payment-badges">${paymentBadges(t)}</span></td></tr>`;}).join('')||`<tr><td colspan="4" class="empty">Nenhuma transação</td></tr>`;
   // Recent tx mobile
   document.getElementById('dashTxMobile').innerHTML=txs.slice(0,6).map(t=>mobileItemTx(t)).join('')||`<div class="empty">Nenhuma transação</div>`;
 }

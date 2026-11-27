@@ -109,14 +109,14 @@ function lancRow(t){
   const sg=t.tipo==='ENTRADA'||t.tipo==='RESGATE'?'+':t.tipo==='INVESTIMENTOS'?'◈':'-';
   const mc={'ENTRADA':'mb-e','SAÍDA':'mb-s','INVESTIMENTOS':'mb-i','RESGATE':'mb-r'}[t.tipo]||'mb-s';
   const mm={'Fixo':'tt-fixo','Parcelado':'tt-parc','Variável':'tt-var'}[t.tipoMov]||'';
-  return`<tr><td><input type="checkbox" class="lCheck" data-id="${t.id}" onchange="selectLanc(this)" ${canDeleteTransaction(t)?'':'disabled'} aria-label="Selecionar transacao" title="Lancamentos vinculados a pendencias devem ser corrigidos na aba correspondente"></td><td><span class="mbadge ${mc}">${t.tipo}</span></td><td class="td-desc">${escapeHTML(t.desc)}${seriesBadge(t)}</td><td class="td-val ${vc}">${sg} ${brl(t.valor)}</td><td class="td-sm">${t.data||'—'}</td><td class="td-sm">${t.categoria||'—'}</td><td>${t.tipoMov?`<span class="ttag ${mm}">${t.tipoMov}</span>`:''}</td><td><span class="payment-badges">${paymentBadges(t)}</span></td><td style="display:flex;gap:4px"><button class="btn btn-g btn-sm" onclick="editLanc('${t.id}')">✎</button><button class="btn btn-d btn-sm" onclick="delLanc('${t.id}')">✕</button></td></tr>`;
+  return`<tr><td><input type="checkbox" class="lCheck" data-id="${t.id}" onchange="selectLanc(this)" ${canDeleteTransaction(t)?'':'disabled'} aria-label="Selecionar transacao" title="Lancamentos vinculados a pendencias devem ser corrigidos na aba correspondente"></td><td><span class="mbadge ${mc}">${t.tipo}</span></td><td class="td-desc"><span class="transaction-name" title="${escapeHTML(t.desc)}">${escapeHTML(t.desc)}</span>${seriesBadge(t)}</td><td class="td-val ${vc}">${sg} ${brl(t.valor)}</td><td class="td-sm">${t.data||'—'}</td><td class="td-sm">${escapeHTML(t.categoria||'—')}</td><td>${t.tipoMov?`<span class="ttag ${mm}">${t.tipoMov}</span>`:''}</td><td><span class="payment-badges">${paymentBadges(t)}</span></td><td style="display:flex;flex-wrap:wrap;gap:4px">${duplicateLancButton(t)}<button class="btn btn-g btn-sm" onclick="editLanc('${t.id}')">✎</button><button class="btn btn-d btn-sm" onclick="delLanc('${t.id}')">✕</button></td></tr>`;
 }
 function mobileItemTx(t, showActs=false){
   const vc=t.tipo==='ENTRADA'?'var(--green)':t.tipo==='INVESTIMENTOS'?'var(--accent2)':t.tipo==='RESGATE'?'var(--purple)':'var(--red)';
   const sg=t.tipo==='ENTRADA'||t.tipo==='RESGATE'?'+':t.tipo==='INVESTIMENTOS'?'◈':'-';
   const ico={'ENTRADA':'💰','SAÍDA':'💸','INVESTIMENTOS':'📈','RESGATE':'💎'}[t.tipo]||'💸';
   const bg={'ENTRADA':'rgba(62,207,142,.1)','SAÍDA':'rgba(244,100,95,.1)','INVESTIMENTOS':'rgba(124,106,247,.1)','RESGATE':'rgba(199,125,255,.1)'}[t.tipo]||'rgba(244,100,95,.1)';
-  return`<div class="mobile-item">${showActs?`<input type="checkbox" class="lCheck" data-id="${t.id}" onchange="selectLanc(this)" ${canDeleteTransaction(t)?'':'disabled'} aria-label="Selecionar transacao">`:''}<div class="mobile-item-icon" style="background:${bg}">${ico}</div><div class="mobile-item-body"><div class="mobile-item-desc">${escapeHTML(t.desc)}${seriesBadge(t)}</div><div class="mobile-item-sub"><span>${t.data||'—'}</span><span>${t.categoria||'—'}</span><span class="payment-badges">${paymentBadges(t)}</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="mobile-item-val" style="color:${vc}">${sg} ${brl(t.valor)}</span>${showActs?`<div style="display:flex;gap:3px"><button class="btn btn-g btn-sm" style="padding:3px 7px" onclick="editLanc('${t.id}')">✎</button><button class="btn btn-d btn-sm" style="padding:3px 7px" onclick="delLanc('${t.id}')">✕</button></div>`:''}</div></div>`;
+  return`<div class="mobile-item">${showActs?`<input type="checkbox" class="lCheck" data-id="${t.id}" onchange="selectLanc(this)" ${canDeleteTransaction(t)?'':'disabled'} aria-label="Selecionar transacao">`:''}<div class="mobile-item-icon" style="background:${bg}">${ico}</div><div class="mobile-item-body"><div class="mobile-item-desc">${escapeHTML(t.desc)}${seriesBadge(t)}</div><div class="mobile-item-sub"><span>${t.data||'—'}</span><span>${escapeHTML(t.categoria||'—')}</span><span class="payment-badges">${paymentBadges(t)}</span></div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="mobile-item-val" style="color:${vc}">${sg} ${brl(t.valor)}</span>${showActs?`<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:3px">${duplicateLancButton(t)}<button class="btn btn-g btn-sm" style="padding:3px 7px" onclick="editLanc('${t.id}')">✎</button><button class="btn btn-d btn-sm" style="padding:3px 7px" onclick="delLanc('${t.id}')">✕</button></div>`:''}</div></div>`;
 }
 function clearFilters(){['fSearch','fDe','fAte'].forEach(id=>document.getElementById(id).value='');Object.values(lancFilters).forEach(set=>set.clear());renderLanc();}
 function toggleAll(cb){selectedLancIds=cb.checked?new Set(visibleLancIds):new Set();updateLancSelection();}
@@ -127,6 +127,7 @@ function openAddLanc(){
   editingLancId=null;document.getElementById('moLancTitle').textContent='Novo Lançamento';
   ['lTipo','lMov','lDesc','lValor','lCat'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('lTipo').value='SAÍDA';
+  populateLancCategories();
   populatePaymentFields({});
   const now=new Date();
   document.getElementById('lData').value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
@@ -136,22 +137,45 @@ function editLanc(id){
   const mk=MK[DATA.currentMonth],t=getYearData().months[mk].transactions.find(x=>x.id===id);if(!t)return;
   if(t.obligationId){alert('Este lançamento foi gerado por uma devolução ou reposição. Para corrigir, estorne o registro no histórico da pendência e registre novamente.');return;}
   document.getElementById('seriesEditGroup').style.display=t.seriesId?'flex':'none';
-  document.getElementById('seriesEditScope').value='one';
+  const isInstallment=t.seriesId&&t.seriesKind==='installments';
+  const redistribute=document.getElementById('seriesRedistributeOption');
+  redistribute.hidden=redistribute.disabled=!isInstallment;
+  document.getElementById('seriesRedistributeHelp').hidden=!isInstallment;
+  document.getElementById('seriesEditScope').value=isInstallment?'redistribute':'one';
   editingLancId=id;document.getElementById('moLancTitle').textContent='Editar Lançamento';
+  populateLancFields(t);
+}
+function duplicateLanc(id){
+  const source=getYearData().months[MK[DATA.currentMonth]].transactions.find(t=>t.id===id);
+  if(!source)return;
+  editingLancId=null;
+  document.getElementById('moLancTitle').textContent='Duplicar lançamento';
+  document.getElementById('seriesEditGroup').style.display='none';
+  document.getElementById('seriesEditScope').value='one';
+  populateLancFields({...source,data:source.data||localDate()});
+  document.getElementById('lData').focus();
+}
+function duplicateLancButton(t){
+  return `<button type="button" class="btn btn-g btn-sm" data-duplicate-id="${escapeHTML(t.id)}" onclick="duplicateLanc(this.dataset.duplicateId)">Duplicar</button>`;
+}
+function populateLancFields(t){
   document.getElementById('lTipo').value=t.tipo;document.getElementById('lMov').value=t.tipoMov||'';
   document.getElementById('lDesc').value=t.desc;document.getElementById('lValor').value=t.valor;
-  document.getElementById('lCat').value=t.categoria||'';
-  if(t.categoria && !document.getElementById('lCat').value){
-    const option=document.createElement('option');option.value=t.categoria;option.textContent=t.categoria;
-    document.getElementById('lCat').append(option);document.getElementById('lCat').value=t.categoria;
-  }
+  populateLancCategories(t.categoria);
   populatePaymentFields(t);
   document.getElementById('lDue').value=t.dueDate||'';
   document.getElementById('lData').value=t.data||'';onTipoChg();openModal('moLanc');
 }
+function populateLancCategories(selected=''){
+  const categories=registeredCategories();
+  if(selected&&!categories.includes(selected))categories.push(selected);
+  const select=document.getElementById('lCat');
+  select.innerHTML='<option value="">—</option>'+categories.map(name=>`<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`).join('');
+  select.value=selected||'';
+}
 function populatePaymentFields(t){
   const p=paymentInfo(t);
-  const keys=[...new Set([...Object.keys(BANKS),...Object.keys(DATA.customBanks||{}),p.card].filter(k=>k&&k!=='pago'))];
+  const keys=[...new Set([...registeredCardKeys(),p.card].filter(k=>k&&k!=='pago'))];
   document.getElementById('lBanco').innerHTML='<option value="">Selecione o cartão</option>'+keys.map(k=>`<option value="${escapeHTML(k)}">${escapeHTML(cardInfo(k).l)}</option>`).join('');
   const method=document.getElementById('lForma');
   if(![...method.options].some(option=>option.value===p.method)){
@@ -172,24 +196,33 @@ async function salvarLanc(){
   const method=document.getElementById('lForma').value;
   const card=['credito','debito'].includes(method)?document.getElementById('lBanco').value:'';
   const t={...previous,id:editingLancId||uuid(),tipo:document.getElementById('lTipo').value,desc:document.getElementById('lDesc').value.trim(),valor:parseFloat(document.getElementById('lValor').value),categoria:document.getElementById('lCat').value,tipoMov:document.getElementById('lMov').value,formaPagamento:method,cartao:card,status:document.getElementById('lStatus').value,banco:card||'pago',data:document.getElementById('lData').value};
+  if(isInvestmentTransaction(t)&&!isInvestmentTransaction(previous)&&!t.investmentReview)t.investmentReview='pending';
   t.dueDate=document.getElementById('lDue')?.value??previous?.dueDate??'';
   if(t.dueDate&&!agendaValidDate(t.dueDate)){alert('Informe um vencimento válido.');return;}
   if(!t.desc||!Number.isFinite(t.valor)||t.valor<=0){alert('Preencha a descrição e um valor maior que zero.');return;}
   if(['credito','debito'].includes(method)&&!card){alert('Selecione o cartão utilizado.');return;}
-  if(previous?.seriesId&&document.getElementById('seriesEditScope').value==='future'&&!confirm('Alterar esta ocorrência e as próximas pendentes da série? O novo valor será aplicado a cada uma; ocorrências posteriores pagas serão preservadas.'))return;
+  const seriesScope=previous?.seriesId?document.getElementById('seriesEditScope').value:'one';
+  if(seriesScope==='future'&&!confirm('Alterar esta ocorrência e as próximas pendentes da série? O novo valor será aplicado a cada uma; ocorrências posteriores pagas serão preservadas.'))return;
   if(!await persistPlanningChange(()=>{
   if(previous?.seriesId){
     if(t.tipo!==previous.tipo)throw new Error('Mantenha o tipo da ocorrência da série.');
     seriesDate(t.data,0);
-    if(document.getElementById('seriesEditScope').value==='future')updateSeriesFrom(previous,t);
+    if(seriesScope==='future')updateSeriesFrom(previous,t);
     else{
+      if(seriesScope==='redistribute'&&previous.seriesKind==='installments')redistributeInstallmentBalance(previous,t);
       getYearData().months[mk].transactions=getYearData().months[mk].transactions.filter(x=>x.id!==previous.id);
       seriesMonth(t.data).transactions.push(t);
     }
     return;
   }
   if(!editingLancId){
-    getYearData().months[mk].transactions.unshift(t);
+    const activePeriod=activeYear()+'-'+String(DATA.currentMonth+1).padStart(2,'0');
+    if(t.data&&t.data.slice(0,7)!==activePeriod){
+      seriesDate(t.data,0);
+      seriesMonth(t.data).transactions.unshift(t);
+    }else{
+      getYearData().months[mk].transactions.unshift(t);
+    }
   } else {
     const idx=getYearData().months[mk].transactions.findIndex(x=>x.id===editingLancId);
     if(idx>=0) getYearData().months[mk].transactions[idx]=t;

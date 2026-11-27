@@ -7,6 +7,9 @@ function localDate(){
 function pendingPaid(item){return (item.payments||[]).reduce((sum,p)=>sum+Number(p.amount||0),0);}
 function pendingRemaining(item){return Math.max(0,Math.round((Number(item.amount)-pendingPaid(item))*100)/100);}
 function obligations(kind){return (DATA.obligations||[]).filter(item=>item.kind===kind);}
+function isInvestmentTransaction(t){
+  return t?.tipo==='INVESTIMENTOS'||t?.tipo==='RESGATE';
+}
 function validateSettlement(item,amount){
   if(!Number.isFinite(amount)||amount<=0)throw new Error('Informe um valor maior que zero.');
   if(Math.round(amount*100)>Math.round(pendingRemaining(item)*100))throw new Error('O valor supera o saldo pendente.');
@@ -37,6 +40,7 @@ function registerSettlement(item,amount,date){
   const payment={id:uuid(),amount:Math.round(amount*100)/100,date};
   const transaction={id:uuid(),tipo:item.kind==='receivable'?'ENTRADA':'INVESTIMENTOS',desc:(item.kind==='receivable'?'Devolução recebida: ':'Reposição de investimentos: ')+item.description,valor:payment.amount,data:date,categoria:item.kind==='receivable'?'Entrada':'Investimentos',tipoMov:'Variável',banco:'pago',formaPagamento:'nao_informado',status:'pago',obligationId:item.id};
   payment.transactionId=transaction.id;payment.year=year;payment.month=MK[month];
+  if(isInvestmentTransaction(transaction))transaction.investmentReview='pending';
   period.months[MK[month]].transactions.unshift(transaction);
   if(!item.payments)item.payments=[];
   item.payments.push(payment);

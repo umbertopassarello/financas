@@ -16,6 +16,7 @@ function renderPage(p){
   else if(p==='receivables') renderReceivables();
   else if(p==='calendario') renderCalendar();
   else if(p==='agenda') renderAgenda();
+  else if(p==='cadastros') renderRegistrations();
   else if(p==='caixa') renderCash();
   else if(p==='metas') renderMetas();
   else if(p==='orcamentos') renderBudgets();

@@ -13,8 +13,8 @@ function renderAnual(){
   if(showCatAnual)renderAnualCat();
 }
 function renderAnualCat(){
-  const cm={};MK.forEach(k=>{getYearData().months[k].transactions.filter(t=>t.tipo==='SAÍDA').forEach(t=>{const c=t.categoria||'Outros';cm[c]=(cm[c]||0)+t.valor;});});
+  const cm=Object.create(null);MK.forEach(k=>{getYearData().months[k].transactions.filter(t=>t.tipo==='SAÍDA').forEach(t=>{const c=t.categoria||'Outros';cm[c]=(cm[c]||0)+t.valor;});});
   const sorted=Object.entries(cm).sort((a,b)=>b[1]-a[1]);const total=sorted.reduce((s,[,v])=>s+v,0),mx=sorted[0]?.[1]||1;
-  document.getElementById('anualCatChart').innerHTML=sorted.map(([cat,val],i)=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:12.5px;color:var(--text2)">${cat}</span><span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3)">${brl(val)} <span style="color:${CCOLORS[i%CCOLORS.length]};font-weight:600">${total>0?(val/total*100).toFixed(1):0}%</span></span></div><div class="prog" style="height:8px"><div class="prog-fill" style="width:${(val/mx*100).toFixed(1)}%;background:${CCOLORS[i%CCOLORS.length]}"></div></div></div>`).join('')||'<span style="color:var(--text3)">Sem dados</span>';
+  document.getElementById('anualCatChart').innerHTML=sorted.map(([cat,val],i)=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:12.5px;color:var(--text2)">${escapeHTML(cat)}</span><span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text3)">${brl(val)} <span style="color:${CCOLORS[i%CCOLORS.length]};font-weight:600">${total>0?(val/total*100).toFixed(1):0}%</span></span></div><div class="prog" style="height:8px"><div class="prog-fill" style="width:${(val/mx*100).toFixed(1)}%;background:${CCOLORS[i%CCOLORS.length]}"></div></div></div>`).join('')||'<span style="color:var(--text3)">Sem dados</span>';
 }
 

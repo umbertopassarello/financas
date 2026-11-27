@@ -20,18 +20,77 @@ function openObligation(kind,id=null){
   document.getElementById('obligationTitle').textContent=kind==='receivable'?'Devolução a receber':'Resgate a repor';
   for(const [field,value] of Object.entries({oDescription:item?.description||'',oPerson:item?.person||'',oAmount:item?.amount||'',oDate:item?.date||localDate(),oDue:item?.due||''}))document.getElementById(field).value=value;
   document.getElementById('oPersonGroup').hidden=kind!=='receivable';
-  const period=getYearData(),options=[];
-  MK.forEach(mk=>(period.months[mk]?.transactions||[]).filter(t=>t.tipo===(kind==='receivable'?'SAÍDA':'RESGATE')).forEach(t=>options.push({key:mk+':'+t.id,mk,t})));
-  document.getElementById('oSource').innerHTML='<option value="">Sem vínculo (registro manual)</option>'+options.map(({key,mk,t})=>`<option value="${escapeHTML(key)}">${escapeHTML(MONTHS[MK.indexOf(mk)]+' · '+t.desc+' · '+brl(t.valor))}</option>`).join('');
-  const source=document.getElementById('oSource');
-  source.value=item?.sourceId&&item.sourceYear===activeYear()?item.sourceMonth+':'+item.sourceId:'';
-  source.disabled=!!item;
-  document.getElementById('oSourceHelp').textContent=item?.sourceId?'O vínculo original será preservado.':'Vincular não cria outra saída nem outro resgate. Sem vínculo, informe um valor já gasto ou resgatado.';
+  document.getElementById('oSourcePicker').hidden=!!item;
+  if(!item){
+    const months=Object.entries(obligationSourceYears()).sort(([a],[b])=>Number(b)-Number(a))
+      .flatMap(([year,period])=>MK.flatMap((month,index)=>period.months[month]
+        ? [{key:year+':'+month,label:MONTHS[index]+' de '+year}]:[]).reverse());
+    const period=document.getElementById('oSourcePeriod');
+    period.innerHTML=obligationSourceOptions('Selecione o mês e o ano',months);
+    period.value='';
+    updateObligationSourceFilters();
+  }
+  document.getElementById('oSourceHelp').textContent=item?.sourceId?'O vínculo original será preservado.':(item?'':'Para registrar manualmente, deixe o lançamento de origem em branco.');
   openModal('moObligation');
 }
+function obligationSourceYears(){
+  return DATA.years||{[activeYear()]:getYearData()};
+}
+function obligationSourcePeriod(){
+  const [year,month]=document.getElementById('oSourcePeriod').value.split(':');
+  return {year:Number(year),month};
+}
+function obligationSourceTransactions(){
+  const {year,month}=obligationSourcePeriod();
+  const type=obligationKind==='receivable'?'SAÍDA':'RESGATE';
+  return (obligationSourceYears()[year]?.months[month]?.transactions||[])
+    .filter(t=>t.tipo===type);
+}
+function obligationSourceOptions(placeholder,options){
+  return `<option value="">${escapeHTML(placeholder)}</option>`+options.map(({key,label})=>
+    `<option value="${escapeHTML(key)}">${escapeHTML(label)}</option>`).join('');
+}
+function updateObligationSourceFilters(){
+  const transactions=obligationSourceTransactions();
+  const category=document.getElementById('oSourceCategory');
+  const method=document.getElementById('oSourceMethod');
+  const categories=[...new Set(transactions.map(t=>t.categoria||'Sem categoria'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const methods=[...new Set(transactions.map(t=>paymentInfo(t).method))];
+  category.innerHTML=obligationSourceOptions('Todas as categorias',categories.map(key=>({key,label:key})));
+  method.innerHTML=obligationSourceOptions('Todas as formas de pagamento',methods.map(key=>({key,label:PAYMENT_METHODS[key]||key})));
+  category.value='';
+  method.value='';
+  document.getElementById('oSourceSearch').value='';
+  document.getElementById('oSourceFilters').hidden=!transactions.length;
+  document.getElementById('oSource').value='';
+  renderObligationSources();
+}
+function renderObligationSources(){
+  const category=document.getElementById('oSourceCategory').value;
+  const method=document.getElementById('oSourceMethod').value;
+  const search=document.getElementById('oSourceSearch').value.trim().toLocaleLowerCase('pt-BR');
+  const period=document.getElementById('oSourcePeriod').value;
+  const source=document.getElementById('oSource');
+  const selected=source.value;
+  const options=obligationSourceTransactions().filter(t=>
+    (!category||(t.categoria||'Sem categoria')===category)
+    &&(!method||paymentInfo(t).method===method)
+    &&(!search||(t.desc||'').toLocaleLowerCase('pt-BR').includes(search)))
+    .sort((a,b)=>(b.data||'').localeCompare(a.data||''))
+    .map(t=>({key:t.id,label:[t.data,t.desc,brl(t.valor)].filter(Boolean).join(' · ')}));
+  source.innerHTML=obligationSourceOptions(period?'Selecione um lançamento':'Selecione primeiro o mês e o ano',options);
+  source.disabled=!options.length;
+  source.value=options.some(({key})=>key===selected)?selected:'';
+  const results=document.getElementById('oSourceResults');
+  results.textContent=period&&!options.length?'Nenhum lançamento encontrado.':'';
+  if(selected&&!source.value)results.textContent+=' Selecione novamente o lançamento para vincular.';
+}
+function selectedObligationSource(){
+  const id=document.getElementById('oSource').value;
+  return obligationSourceTransactions().find(t=>t.id===id);
+}
 function selectObligationSource(){
-  const [mk,id]=document.getElementById('oSource').value.split(':');
-  const t=getYearData().months[mk]?.transactions.find(t=>t.id===id);
+  const t=selectedObligationSource();
   if(!t)return;
   document.getElementById('oDescription').value=t.desc;
   document.getElementById('oAmount').value=t.valor;
@@ -44,7 +103,12 @@ async function submitObligation(event){
   if(!item.description||!item.date||!Number.isFinite(item.amount)||item.amount<=0){alert('Informe descrição, data e valor maior que zero.');return;}
   if(item.kind==='receivable'&&!item.person){alert('Informe quem fará a devolução.');return;}
   if(item.amount<pendingPaid(item)){alert('O total não pode ser menor que o valor já devolvido.');return;}
-  if(!old&&document.getElementById('oSource').value){const [mk,id]=document.getElementById('oSource').value.split(':');item.sourceId=id;item.sourceMonth=mk;item.sourceYear=activeYear();}
+  if(!old&&document.getElementById('oSource').value){
+    const source=selectedObligationSource();
+    if(!source){alert('Selecione um lançamento de origem válido.');return;}
+    const {year,month}=obligationSourcePeriod();
+    item.sourceId=source.id;item.sourceMonth=month;item.sourceYear=year;
+  }
   if(!await persistPlanningChange(()=>saveObligation(item)))return;
   closeModal('moObligation');renderPage(curPage);
 }

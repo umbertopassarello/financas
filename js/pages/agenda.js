@@ -49,7 +49,7 @@ function renderAgenda(){
     const meta=item.type==='receivable'?item.person:MONTHS[MK.indexOf(item.month)]+' / '+item.year+(item.type==='invoice'?' · '+item.refs.length+' compra(s) pendente(s)':'');
     return '<article class="obligation-item"><div class="obligation-info"><h3>'+escapeHTML(item.title)+'</h3><p>'+labels[item.type]+' · '+escapeHTML(meta||'')+'</p><span class="payment-status '+(item.due&&item.due<today?'is-overdue':'is-pending')+'">'+status+'</span><p>'+(item.due?'Vencimento: '+item.due.split('-').reverse().join('/'):'Informe uma data para acompanhar o vencimento.')+'</p></div><div class="obligation-actions"><strong>'+brl(item.cents/100)+'</strong><button class="btn btn-p btn-sm" data-agenda-pay="'+index+'">'+(item.type==='receivable'?'Registrar recebimento':'Marcar pago hoje')+'</button><button class="btn btn-g btn-sm" data-agenda-open="'+index+'">'+(item.type==='receivable'?'Editar previsão':'Ver lançamentos')+'</button></div></article>';
   }).join(''):'<p class="empty">Nenhum compromisso neste filtro.</p>';
-  const cards=[...new Set([...Object.keys(BANKS),...Object.keys(DATA.customBanks||{}),...items.filter(i=>i.type==='invoice').map(i=>i.card),...Object.keys(DATA.cardDueDays||{})])].filter(k=>k!=='pago');
+  const cards=[...new Set([...registeredCardKeys(),...items.filter(i=>i.type==='invoice').map(i=>i.card),...Object.keys(DATA.cardDueDays||{})])].filter(k=>k!=='pago');
   const select=document.getElementById('agendaCard'),chosen=select.value;
   select.innerHTML=cards.map(card=>'<option value="'+escapeHTML(card)+'">'+escapeHTML(cardInfo(card).l)+'</option>').join('');
   if(cards.includes(chosen))select.value=chosen;

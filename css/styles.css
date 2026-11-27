@@ -103,6 +103,10 @@ tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:var(--surface2);}
 td{padding:14px 18px;font-size:13px;vertical-align:middle;}
 .td-desc{color:var(--text);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td-desc .transaction-name{display:block;overflow:hidden;text-overflow:ellipsis;}
+.td-desc .transaction-name ~ button,.td-desc .transaction-name ~ .ttag{display:table;margin-top:4px;white-space:normal;}
+#seriesForm [hidden]{display:none;}
+#oSourcePicker[hidden]{display:none;}
 .td-val{font-family:'DM Mono',monospace;font-size:12.5px;white-space:nowrap;font-weight:500;}
 .td-val.g{color:var(--green);}
 .td-val.r{color:var(--red);}

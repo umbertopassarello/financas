@@ -3,7 +3,7 @@ const fs=require('node:fs'),vm=require('node:vm');
 function setup(){
  const nodes={}; for(const id of ['mDesc','mObj','mAtual','mAporteVal','mAporteData','simSal','simExtra','simAnt','simInv','simNotes','simTbody','srAnt','srEnt','srInv','srGas','srMes','srFinal'])nodes[id]={value:'',style:{}};
  const alerts=[]; const c=vm.createContext({DATA:{metas:[{id:'m',descricao:'Reserva',objetivo:100,atual:50,aportes:[]}]},editingMetaId:'m',simRows:[],CU:{login:'test'},CATS:[],document:{getElementById:id=>nodes[id]},alert:m=>alerts.push(m),saveData:async()=>true,closeModal(){},uuid:()=> 'new',brl:v=>String(v),rememberRecord(){},setSyncing(){},setSynced(){},setSyncErr(){}});
- for(const file of ['pages/metas.js','pages/simulacao.js'])vm.runInContext(fs.readFileSync('js/'+file,'utf8'),c);
+ for(const file of ['transactions.js','pages/metas.js','pages/simulacao.js'])vm.runInContext(fs.readFileSync('js/'+file,'utf8'),c);
  c.renderMetas=()=>{}; nodes.mDesc.value='Reserva';nodes.mObj.value='100';nodes.mAtual.value='0';return {c,nodes,alerts};
 }
 test('meta accepts zero and restores previous data on failure while retaining edit',async()=>{

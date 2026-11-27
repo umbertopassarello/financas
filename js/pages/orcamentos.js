@@ -24,7 +24,7 @@ function budgetSummary(month){
   });
 }
 function budgetCategories(month){
-  return [...new Set([...CATS,...(DATA.customCats||[]),...month.transactions.map(t=>t.categoria||'Sem categoria'),...(month.budgets||[]).map(b=>b.category),...(DATA.defaultBudgets||[]).map(b=>b.category)])].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  return [...new Set([...registeredCategories(),...month.transactions.map(t=>t.categoria||'Sem categoria'),...(month.budgets||[]).map(b=>b.category),...(DATA.defaultBudgets||[]).map(b=>b.category)])].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 }
 function renderBudgets(){
   const month=getYearData().months[MK[DATA.currentMonth]],rows=budgetSummary(month);
